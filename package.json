@@ -1,0 +1,60 @@
+{
+  "name": "auto-detail-app",
+  "version": "0.1.0",
+  "private": false,
+  "description": "Auto  Assessment Assistant App",
+  "scripts": {
+    "dev": "npm-run-all --parallel dev:frontend dev:backend",
+    "dev:frontend": "next dev --experimental-https --turbopack",
+    "dev:backend": "convex dev",
+    "predev": "convex dev --until-success && convex dashboard",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@clerk/clerk-react": "^5.38.1",
+    "@clerk/nextjs": "^6.28.1",
+    "@clerk/themes": "^2.4.4",
+    "@hookform/resolvers": "^5.2.1",
+    "@radix-ui/react-accordion": "^1.2.11",
+    "@radix-ui/react-checkbox": "^1.3.2",
+    "@radix-ui/react-label": "^2.1.7",
+    "@radix-ui/react-select": "^2.2.5",
+    "@radix-ui/react-slot": "^1.2.3",
+    "@tailwindcss/cli": "^4.1.11",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "convex": "^1.25.4",
+    "framer-motion": "^12.23.12",
+    "lucide-react": "^0.536.0",
+    "next": "15.4.5",
+    "postcss": "^8.5.6",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "react-hook-form": "^7.62.0",
+    "tailwind-merge": "^3.3.1",
+    "tailwindcss-animate": "^1.0.7",
+    "zod": "^4.0.14"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.3.1",
+    "@tailwindcss/postcss": "^4.1.11",
+    "@types/node": "^24.2.0",
+    "@types/react": "^19.1.9",
+    "@types/react-dom": "^19.1.7",
+    "eslint": "^9.32.0",
+    "eslint-config-next": "15.4.5",
+    "npm-run-all": "^4.1.5",
+    "prettier": "^3.6.2",
+    "tailwindcss": "^4.1.11",
+    "tw-animate-css": "^1.3.6",
+    "typescript": "^5.9.2"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "@tailwindcss/oxide"
+    ]
+  }
+}
