@@ -38,3 +38,37 @@ export const getServicesForCurrentOrg = query({
             .collect();
     }
 });
+
+// Update a service's details
+export const updateService = mutation({
+    args: {
+        serviceId: v.id("services"),
+        name: v.optional(v.string()),
+        price: v.optional(v.number()),
+    },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) {
+            throw new Error("You must be logged in to update a service.");
+        }
+
+        const { serviceId, ...rest } = args;
+
+        await ctx.db.patch(serviceId, rest);
+    },
+});
+
+// Delete a service
+export const deleteService = mutation({
+    args: {
+        serviceId: v.id("services"),
+    },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) {
+            throw new Error("You must be logged in to delete a service.");
+        }
+
+        await ctx.db.delete(args.serviceId);
+    },
+});
