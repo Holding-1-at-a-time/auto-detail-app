@@ -40,4 +40,9 @@ export default defineSchema({
     }).index("by_orgId", ["orgId"])
       .index("by_clerkId", ["clerkId"]),
 
+  // NEW: Table to store organization-specific details
+  organizations: defineTable({
+    clerkOrgId: v.string(),
+    name: v.string(),
+  }).index("by_clerkOrgId", ["clerkOrgId"]),
 });
