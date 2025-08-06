@@ -1,0 +1,23 @@
+# .github/codeql/codeql-config.yml
+
+name: "CodeQL Config"
+
+# You can use 'packs' to add community or experimental query packs
+packs:
+  # Standard GitHub-maintained packs for your language
+  - codeql/javascript-queries
+  # Community-maintained packs
+  - githubsecuritylab/codeql-javascript-queries
+
+# Specifies the query packs to run.
+# 'security-extended' and 'security-and-quality' are great choices for thorough analysis.
+queries:
+  - uses: security-extended
+  - uses: security-and-quality
+
+# You can ignore specific paths to speed up analysis and reduce noise.
+# This is useful for ignoring test files, build outputs, or vendor libraries.
+paths-ignore:
+  - "**/__tests__/"
+  - "**/node_modules/"
+  - "dist/"
