@@ -83,7 +83,7 @@ jobs:
         cache: 'pnpm' # Use 'yarn' or 'pnpm' if you use those
 
     - name: Install dependencies
-      run: pnpm install
+      run: npm install -g pnpm
 
     - name: Build project
       run: npm run build --if-present # Use --if-present to avoid errors if you have no build script
