@@ -82,8 +82,8 @@ jobs:
         node-version: '20' # Or your project's version
         cache: 'pnpm' # Use 'yarn' or 'pnpm' if you use those
 
-    - name: Install dependencies
-      run: npm install -g pnpm
+  #  - name: Install dependencies
+  #    run: npm install -g pnpm
 
     - name: Build project
       run: npm run build --if-present # Use --if-present to avoid errors if you have no build script
