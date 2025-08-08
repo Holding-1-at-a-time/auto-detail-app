@@ -47,3 +47,4 @@ package-lock.json
 /.clerk/
 
 certificates
+.early.coverage
