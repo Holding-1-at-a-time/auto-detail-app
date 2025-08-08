@@ -2,8 +2,10 @@
 "use client";
 
 import { useMutation, useQuery } from "convex/react";
+import { useOrganization } from "@clerk/nextjs";
 import { api } from "@/convex/_generated/api";
 import { Doc, Id } from "@/convex/_generated/dataModel";
+import { Card } from "@/components/ui/card";
 
 import {
   Table,
@@ -42,7 +44,9 @@ import { useState } from "react";
 // Sub-component for the action menu to keep the main component clean
 function AssessmentActions({ assessment }: { assessment: Doc<"assessments"> }) {
   const deleteAssessment = useMutation(api.assessments.deleteAssessment);
-  const updateAssessmentStatus = useMutation(api.assessments.updateAssessmentStatus);
+  const updateAssessmentStatus = useMutation(
+    api.assessments.updateAssessmentStatus
+  );
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
   const newStatuses = ["pending", "reviewed", "complete"].filter(
@@ -64,10 +68,9 @@ function AssessmentActions({ assessment }: { assessment: Doc<"assessments"> }) {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-// AlertDialogAction
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => deleteAssessment(assessment._id)}
+              onClick={() =>
+                deleteAssessment({ assessmentId: assessment._id })
+              }
             >
               Confirm Delete
             </AlertDialogAction>
@@ -91,9 +94,8 @@ function AssessmentActions({ assessment }: { assessment: Doc<"assessments"> }) {
                 <DropdownMenuItem
                   key={status}
                   onClick={() =>
-// DropdownMenuItem
                     updateAssessmentStatus({
-                      id: assessment._id,
+                      assessmentId: assessment._id,
                       status: status as "pending" | "reviewed" | "complete",
                     })
                   }
@@ -119,7 +121,11 @@ function AssessmentActions({ assessment }: { assessment: Doc<"assessments"> }) {
 
 // Main Dashboard Page Component
 export default function DashboardPage() {
-  const assessments = useQuery(api.assessments.getByOrg);
+  const { organization } = useOrganization();
+  const assessments = useQuery(
+    api.assessments.getByOrg,
+    organization?.id ? { orgId: organization.id as Id<"organizations"> } : "skip"
+  );
 
   return (
     <div>
