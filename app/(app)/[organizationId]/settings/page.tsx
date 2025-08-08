@@ -3,9 +3,10 @@
 
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { useOrganization, Protect } from '@clerk/nextjs';
+import { useOrganization, Protect, useUser } from '@clerk/nextjs';
 import { QRCodeSVG } from 'qrcode.react';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
+import { Id } from '@/convex/_generated/dataModel';
 import { toast } from "sonner"; // <-- Import toast from Sonner
 
 import { Button } from '@/components/ui/button';
@@ -17,45 +18,55 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
  * Renders a card for managing business services.
  */
 function ManageServicesCard() {
-    const services = useQuery(api.services.getServicesForCurrentOrg);
+    const { organization } = useOrganization();
+    const { user } = useUser();
+    const services = useQuery(
+        api.services.getServicesForCurrentOrg,
+        organization?.id ? { orgId: organization.id as Id<"organizations"> } : "skip"
+    );
     const createService = useMutation(api.services.createService);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
+        setIsSubmitting(true);
         const formData = new FormData(event.currentTarget);
         const name = formData.get('name') as string;
         const price = Number(formData.get('price'));
-        const { organization } = useOrganization();
         const orgId = organization?.id;
-        const userId = 'some-user-id'; // Replace with actual user ID
-        const clientName = 'default-client'; // Replace with actual client name
-        const carMake = 'default-make'; // Replace with actual car make
-        const carModel = 'default-model'; // Replace with actual car model
-        const carYear = 2022; // Replace with actual car year
+        const userId = user?.id;
 
-        if (!orgId) {
-            toast.error("Organization ID is missing.");
+        if (!orgId || !userId) {
+            toast.error("Organization or user ID is missing.");
+            setIsSubmitting(false);
             return;
         }
 
-        await createService({
-            orgId,
-            name,
-            price,
-            userId,
-            clientName,
-            carMake,
-            carModel,
-            carYear
-        })
-            .then(() => {
-                toast.success("New service has been added."); // <-- Use Sonner for success
-                event.currentTarget.reset();
-            })
-            .catch((error) => {
-                toast.error("Failed to add the service."); // <-- Use Sonner for error
-                console.error(error);
+        // Dummy data for fields not in the form
+        const clientName = 'default-client';
+        const carMake = 'default-make';
+        const carModel = 'default-model';
+        const carYear = 2022;
+
+        try {
+            await createService({
+                orgId: orgId as Id<"organizations">,
+                name,
+                price,
+                userId: userId as Id<"users">,
+                clientName,
+                carMake,
+                carModel,
+                carYear
             });
+            toast.success("New service has been added.");
+            (event.target as HTMLFormElement).reset();
+        } catch (error) {
+            toast.error("Failed to add the service.");
+            console.error(error);
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
@@ -68,8 +79,8 @@ function ManageServicesCard() {
                 <form onSubmit={handleSubmit} className="flex flex-col md:flex-row gap-4 mb-8">
                     <Input name="name" placeholder="Service Name (e.g., Interior Detail)" required />
                     <Input name="price" type="number" placeholder="Price" step="0.01" required />
-                    <Button type="submit" disabled={createService.isPending}>
-                        {createService.isPending ? 'Adding...' : 'Add Service'}
+                    <Button type="submit" disabled={isSubmitting}>
+                        {isSubmitting ? 'Adding...' : 'Add Service'}
                     </Button>
                 </form>
 

@@ -74,31 +74,16 @@ export const getAllServices = query({
 export const getServicesForCurrentOrg = query({
     args: {
         orgId: v.id("organizations"),
-        userId: v.id("users"),
-        name: v.string(),
-        price: v.number(),
-        status: v.union(
-            v.literal("pending"),
-            v.literal("reviewed"),
-            v.literal("complete"),
-            v.literal("cancelled"),
-        ),
-        serviceId: v.array(v.id("services")),
-        notes: v.optional(v.string()),
-        clientName: v.string(),
-        carMake: v.string(),
-        carModel: v.string(),
-        carYear: v.number(),
     },
-    handler: async (ctx) => {
+    handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
-        if (!identity || !identity.orgId) {
+        if (!identity) {
             return [];
         }
 
         return ctx.db
             .query("services")
-            .withIndex("by_orgId", (q) => q.eq("orgId", identity.orgId as Id<"organizations">))
+            .withIndex("by_orgId", (q) => q.eq("orgId", args.orgId))
             .collect();
     }
 });
