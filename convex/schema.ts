@@ -1,3 +1,15 @@
+/**
+    * @description      : 
+    * @author           : rrome
+    * @group            : 
+    * @created          : 08/08/2025 - 08:38:11
+    * 
+    * MODIFICATION LOG
+    * - Version         : 1.0.0
+    * - Date            : 08/08/2025
+    * - Author          : rrome
+    * - Modification    : 
+**/
 // convex/schema.ts
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
@@ -113,10 +125,4 @@ export default defineSchema({
     .index("by_clerk_subscription_id", ["clerkSubscriptionId"])
     .index("by_org_id", ["orgId"]),
 
-
-  // NEW: Table to store organization-specific details
-  organizations: defineTable({
-    clerkOrgId: v.string(),
-    name: v.string(),
-  }).index("by_clerkOrgId", ["clerkOrgId"]),
 });

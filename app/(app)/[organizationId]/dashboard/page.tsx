@@ -1,9 +1,22 @@
+/**
+    * @description      : Dashboard page with paginated assessments list and row navigation
+    * @author           : rrome
+    * @group            : 
+    * @created          : 08/08/2025 - 08:38:53
+    * 
+    * MODIFICATION LOG
+    * - Version         : 1.1.0
+    * - Date            : 08/08/2025
+    * - Author          : qodo
+    * - Modification    : Implement pagination, fix JSX, add routing, align mutation args
+**/
 // app/(app)/[organizationId]/dashboard/page.tsx
 "use client";
 
-import { useMutation, useQuery } from "convex/react";
+import { useMutation, usePaginatedQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Doc, Id } from "@/convex/_generated/dataModel";
+import { useRouter } from "next/navigation";
 
 import {
   Table,
@@ -36,18 +49,20 @@ import {
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { MoreHorizontal } from "lucide-react";
 import { useState } from "react";
 
 // Sub-component for the action menu to keep the main component clean
 function AssessmentActions({ assessment }: { assessment: Doc<"assessments"> }) {
   const deleteAssessment = useMutation(api.assessments.deleteAssessment);
-  const updateAssessmentStatus = useMutation(api.assessments.updateAssessmentStatus);
+  const updateAssessmentStatus = useMutation(
+    api.assessments.updateAssessmentStatus
+  );
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
-  const newStatuses = ["pending", "reviewed", "complete"].filter(
-    (status) => status !== assessment.status
-  );
+  const allStatuses = ["pending", "reviewed", "complete", "cancelled"] as const;
+  const newStatuses = allStatuses.filter((status) => status !== assessment.status);
 
   return (
     <>
@@ -64,10 +79,11 @@ function AssessmentActions({ assessment }: { assessment: Doc<"assessments"> }) {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-// AlertDialogAction
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => deleteAssessment(assessment._id)}
+              onClick={() => {
+                void deleteAssessment({ assessmentId: assessment._id });
+                setIsConfirmOpen(false);
+              }}
+              className="bg-red-600 hover:bg-red-700"
             >
               Confirm Delete
             </AlertDialogAction>
@@ -91,10 +107,9 @@ function AssessmentActions({ assessment }: { assessment: Doc<"assessments"> }) {
                 <DropdownMenuItem
                   key={status}
                   onClick={() =>
-// DropdownMenuItem
                     updateAssessmentStatus({
-                      id: assessment._id,
-                      status: status as "pending" | "reviewed" | "complete",
+                      assessmentId: assessment._id,
+                      status: status as "pending" | "reviewed" | "complete" | "cancelled",
                     })
                   }
                   className="capitalize"
@@ -118,8 +133,29 @@ function AssessmentActions({ assessment }: { assessment: Doc<"assessments"> }) {
 }
 
 // Main Dashboard Page Component
-export default function DashboardPage() {
-  const assessments = useQuery(api.assessments.getByOrg);
+export default function DashboardPage({
+  params,
+}: {
+  params: { organizationId: string };
+}) {
+  const router = useRouter();
+
+  // Use the pagination hook instead of useQuery
+  const {
+    results: assessments,
+    status,
+    loadMore,
+  } = usePaginatedQuery(
+    api.assessments.getByOrg,
+    {
+      orgId: params.organizationId,
+      paginationOpts: { numItems: 10 }
+    }
+  );
+
+  const handleRowClick = (assessmentId: Id<"assessments">) => {
+    router.push(`/${params.organizationId}/dashboard/${assessmentId}`);
+  };
 
   return (
     <div>
@@ -143,7 +179,11 @@ export default function DashboardPage() {
           </TableHeader>
           <TableBody>
             {assessments?.map((assessment) => (
-              <TableRow key={assessment._id}>
+              <TableRow
+                key={assessment._id}
+                onClick={() => handleRowClick(assessment._id)}
+                className="cursor-pointer hover:bg-muted/50"
+              >
                 <TableCell className="font-medium">
                   {assessment.clientName}
                 </TableCell>
@@ -156,7 +196,10 @@ export default function DashboardPage() {
                 <TableCell>
                   {new Date(assessment._creationTime).toLocaleDateString()}
                 </TableCell>
-                <TableCell className="text-right">
+                <TableCell
+                  className="text-right"
+                  onClick={(e) => e.stopPropagation()} // prevent row navigation when clicking actions
+                >
                   <AssessmentActions assessment={assessment} />
                 </TableCell>
               </TableRow>
@@ -164,6 +207,13 @@ export default function DashboardPage() {
           </TableBody>
         </Table>
       </Card>
+
+      {/* Load More button */}
+      <div className="mt-4 flex justify-center">
+        {status === "CanLoadMore" && (
+          <Button onClick={() => loadMore(10)}>Load More</Button>
+        )}
+      </div>
     </div>
   );
 }

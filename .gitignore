@@ -48,3 +48,6 @@ package-lock.json
 
 certificates
 .early.coverage
+
+#Ignore vscode AI rules
+.github\copilot-instructions.md
