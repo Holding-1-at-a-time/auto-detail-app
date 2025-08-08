@@ -60,7 +60,7 @@ function ManageServicesCard() {
                 carYear
             });
             toast.success("New service has been added.");
-            (event.target as HTMLFormElement).reset();
+            event.currentTarget.reset();
         } catch (error) {
             toast.error("Failed to add the service.");
             console.error(error);
