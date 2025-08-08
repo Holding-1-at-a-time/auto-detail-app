@@ -3,98 +3,37 @@ import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 
-/**
- * Centralized helpers to enforce authentication and authorization.
- * NOTE: These helpers assume org and user identifiers are external auth IDs (strings),
- * which should match your schema fields. Ensure your schema reflects this.
- */
-
-// Require an authenticated user and return identity
-async function requireIdentity(ctx: any) {
-  const identity = await ctx.auth.getUserIdentity();
-  if (!identity) {
-    throw new Error("Unauthorized");
-  }
-  return identity;
-}
-
-// Get identity if available, else null
-async function getIdentity(ctx: any) {
-  return await ctx.auth.getUserIdentity();
-}
-
-// Require admin user; uses environment variable ADMIN_USER_ID
-async function requireAdmin(ctx: any) {
-  const identity = await requireIdentity(ctx);
-  if (!process.env.ADMIN_USER_ID) {
-    throw new Error("Server misconfiguration: ADMIN_USER_ID not set");
-  }
-  if (identity.subject !== process.env.ADMIN_USER_ID) {
-    throw new Error("Forbidden");
-  }
-  return identity;
-}
-
-// Ensure the authenticated user has access to the specified org
-// Option A: restrict to active org only (identity.orgId must match requested orgId)
-async function requireOrgAccess(ctx: any, orgId: string) {
-  const identity = await requireIdentity(ctx);
-  if (!identity.orgId) {
-    throw new Error("No active organization");
-  }
-  if (identity.orgId !== orgId) {
-    // For multi-org membership, replace this check with a proper membership lookup.
-    throw new Error("Forbidden: no access to requested organization");
-  }
-  return identity;
-}
-
-// Ensure the authenticated user can modify the given assessment (org-scoped)
-async function requireAssessmentWriteAccess(ctx: any, assessmentId: Id<"assessments">) {
-  const identity = await requireIdentity(ctx);
-  const assessment = await ctx.db.get(assessmentId);
-  if (!assessment) {
-    throw new Error("Assessment not found");
-  }
-  if (!identity.orgId || assessment.orgId !== identity.orgId) {
-    throw new Error("Forbidden");
-  }
-  return { identity, assessment };
-}
-
-// Unified assessment status validator
-const AssessmentStatusValidator = v.union(
-  v.literal("pending"),
-  v.literal("reviewed"),
-  v.literal("complete"),
-  v.literal("cancelled"),
-);
-
 // Mutation to create a new assessment
 export const createAssessment = mutation({
   args: {
+    orgId: v.id("organizations"), // The Clerk Organization ID
+    userId: v.id("users"), // The Clerk User ID
     clientName: v.string(),
     carMake: v.string(),
     carModel: v.string(),
     carYear: v.number(),
-    services: v.array(v.id("services")),
+    services: v.array(v.string()),
     notes: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const identity = await requireIdentity(ctx);
-    if (!identity.orgId) {
-      throw new Error("You must have an active organization to create an assessment.");
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("You must be logged in to create an assessment.");
     }
+
+    const serviceIds = args.services
+      .map((service) => ctx.db.normalizeId("services", service))
+      .filter((id): id is Id<"services"> => id !== null);
 
     return await ctx.db.insert("assessments", {
       clientName: args.clientName,
       carMake: args.carMake,
       carModel: args.carModel,
       carYear: args.carYear,
-      serviceIds: args.services,
+      serviceIds: serviceIds,
       notes: args.notes,
-      orgId: identity.orgId as string,
-      userId: identity.subject as string,
+      orgId: args.orgId,
+      userId: args.userId,
       status: "pending",
     });
   },
@@ -106,7 +45,11 @@ export const deleteAssessment = mutation({
     assessmentId: v.id("assessments"),
   },
   handler: async (ctx, args) => {
-    await requireAssessmentWriteAccess(ctx, args.assessmentId);
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("You must be logged in to delete an assessment.");
+    }
+
     await ctx.db.delete(args.assessmentId);
   },
 });
@@ -115,72 +58,100 @@ export const deleteAssessment = mutation({
 export const updateAssessmentStatus = mutation({
   args: {
     assessmentId: v.id("assessments"),
-    status: AssessmentStatusValidator,
+    status: v.union(
+      v.literal("pending"),
+      v.literal("reviewed"),
+      v.literal("complete")
+    ),
   },
   handler: async (ctx, args) => {
-    await requireAssessmentWriteAccess(ctx, args.assessmentId);
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("You must be logged in to update an assessment.");
+    }
+
     await ctx.db.patch(args.assessmentId, { status: args.status });
   },
 });
 
-// Get a single assessment by its ID (org-scoped)
+// Query to get assessments for the currently logged-in user's organization
+export const getMyAssessments = query({
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return [];
+    }
+
+    const orgId = identity.orgId as Id<"organizations">;
+    if (!orgId) {
+      return [];
+    }
+
+    return ctx.db
+      .query("assessments")
+      .withIndex("by_orgId", (q) => q.eq("orgId", orgId))
+      .order("desc")
+      .collect();
+  },
+});
+
+// Query for the admin to get all assessments
+export const getAllAssessments = query({
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("You are not authorized to view this.");
+    }
+
+    // Simple authorization: check if the user is the designated admin
+    if (identity.subject !== process.env.ADMIN_USER_ID) {
+      throw new Error("You are not authorized to view this.");
+    }
+
+    return ctx.db.query("assessments").order("desc").collect();
+  },
+});
+
+// NEW QUERY: Get all assessments for the user's active organization
+export const getByOrg = query({
+  args: {
+    orgId: v.id("organizations"),
+  },
+  handler: async (ctx, args) => {
+    // Get the user's identity, which includes their active orgId
+    const identity = await ctx.auth.getUserIdentity();
+
+    // If the user is not authenticated, return nothing
+    if (!identity) {
+      return [];
+    }
+
+    // Verify user has access to the requested organization
+    const userMemberships = await ctx.auth.getUserOrgMemberships();
+    if (!userMemberships || !userMemberships[args.orgId]) {
+      return [];
+    }
+
+    // Fetch all assessments that match the user's orgId and order by creation time
+    return ctx.db
+      .query("assessments")
+      .withIndex("by_orgId", (q) => q.eq("orgId", args.orgId))
+      .order("desc")
+      .collect();
+  },
+});
+
+// Get a single assessment by its ID
 export const getAssessmentById = query({
   args: {
     assessmentId: v.id("assessments"),
   },
   handler: async (ctx, args) => {
-    const identity = await requireIdentity(ctx);
-    const assessment = await ctx.db.get(args.assessmentId);
-    if (!assessment) return null;
-    if (!identity.orgId || assessment.orgId !== identity.orgId) {
-      throw new Error("Forbidden");
-    }
-    return assessment;
-  },
-});
-
-// Query to get assessments for the user's active organization
-export const getMyAssessments = query({
-  handler: async (ctx) => {
-    const identity = await getIdentity(ctx);
-    if (!identity || !identity.orgId) {
-      return [] as any[];
-    }
-    return ctx.db
-      .query("assessments")
-      .withIndex("by_orgId", (q: any) => q.eq("orgId", identity.orgId as string))
-      .order("desc")
-      .collect();
-  },
-});
-
-// Query: Get assessments for a specified organization accessible to the user
-export const getByOrg = query({
-  args: {
-    // Optional: if omitted, defaults to active org
-    orgId: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    const identity = await requireIdentity(ctx);
-    const requestedOrgId = args.orgId ?? identity.orgId;
-    if (!requestedOrgId) {
-      return [] as any[];
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("You must be logged in to view an assessment.");
     }
 
-    await requireOrgAccess(ctx, requestedOrgId);
-
-    return ctx.db
-      .query("assessments")
-      .withIndex("by_orgId", (q: any) => q.eq("orgId", requestedOrgId))
-      .order("desc")
-      .collect();
-  },
-});
-
-// Admin-only: Get all assessments
-export const getAllAssessments = query({
-  handler: async (ctx) => {
-    await requireAdmin(ctx);
-    return ctx.db.query("assessments").order("desc").collect();
+    return ctx.db.get(args.assessmentId);
   },
 });

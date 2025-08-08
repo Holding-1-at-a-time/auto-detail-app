@@ -1,22 +1,11 @@
-/**
-    * @description      : Dashboard page with paginated assessments list and row navigation
-    * @author           : rrome
-    * @group            : 
-    * @created          : 08/08/2025 - 08:38:53
-    * 
-    * MODIFICATION LOG
-    * - Version         : 1.1.0
-    * - Date            : 08/08/2025
-    * - Author          : qodo
-    * - Modification    : Implement pagination, fix JSX, add routing, align mutation args
-**/
 // app/(app)/[organizationId]/dashboard/page.tsx
 "use client";
 
-import { useMutation, usePaginatedQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
+import { useOrganization } from "@clerk/nextjs";
 import { api } from "@/convex/_generated/api";
 import { Doc, Id } from "@/convex/_generated/dataModel";
-import { useRouter } from "next/navigation";
+import { Card } from "@/components/ui/card";
 
 import {
   Table,
@@ -79,11 +68,9 @@ function AssessmentActions({ assessment }: { assessment: Doc<"assessments"> }) {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => {
-                void deleteAssessment({ assessmentId: assessment._id });
-                setIsConfirmOpen(false);
-              }}
-              className="bg-red-600 hover:bg-red-700"
+              onClick={() =>
+                deleteAssessment({ assessmentId: assessment._id })
+              }
             >
               Confirm Delete
             </AlertDialogAction>
@@ -109,7 +96,7 @@ function AssessmentActions({ assessment }: { assessment: Doc<"assessments"> }) {
                   onClick={() =>
                     updateAssessmentStatus({
                       assessmentId: assessment._id,
-                      status: status as "pending" | "reviewed" | "complete" | "cancelled",
+                      status: status as "pending" | "reviewed" | "complete",
                     })
                   }
                   className="capitalize"
@@ -133,29 +120,12 @@ function AssessmentActions({ assessment }: { assessment: Doc<"assessments"> }) {
 }
 
 // Main Dashboard Page Component
-export default function DashboardPage({
-  params,
-}: {
-  params: { organizationId: string };
-}) {
-  const router = useRouter();
-
-  // Use the pagination hook instead of useQuery
-  const {
-    results: assessments,
-    status,
-    loadMore,
-  } = usePaginatedQuery(
+export default function DashboardPage() {
+  const { organization } = useOrganization();
+  const assessments = useQuery(
     api.assessments.getByOrg,
-    {
-      orgId: params.organizationId,
-      paginationOpts: { numItems: 10 }
-    }
+    organization?.id ? { orgId: organization.id as Id<"organizations"> } : "skip"
   );
-
-  const handleRowClick = (assessmentId: Id<"assessments">) => {
-    router.push(`/${params.organizationId}/dashboard/${assessmentId}`);
-  };
 
   return (
     <div>
