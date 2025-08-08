@@ -21,7 +21,7 @@ export const createAssessment = mutation({
             throw new Error("You must be logged in to create an assessment.");
         }
 
-        const assessmentId = await ctx.db.insert("assessments", {
+        return await ctx.db.insert("assessments", {
             clientName: args.clientName,
             carMake: args.carMake,
             carModel: args.carModel,
@@ -31,9 +31,41 @@ export const createAssessment = mutation({
             orgId: args.orgId,
             userId: args.userId,
             status: "pending",
-        });
+// Delete an assessment
+export const deleteAssessment = mutation({
+    args: {
+        id: v.id("assessments"),
+    },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) {
+            throw new Error("You must be logged in to delete an assessment.");
+        }
 
-        return assessmentId;
+        return await ctx.db.delete(args.id);
+    },
+});
+
+// Update assessment status
+export const updateAssessmentStatus = mutation({
+    args: {
+        id: v.id("assessments"),
+        status: v.union(
+            v.literal("pending"),
+            v.literal("reviewed"),
+            v.literal("complete"),
+            v.literal("cancelled"),
+        ),
+    },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) {
+            throw new Error("You must be logged in to update an assessment status.");
+        }
+
+        return await ctx.db.patch(args.id, {
+            status: args.status,
+        });
     },
 });
 
@@ -45,25 +77,54 @@ export const getMyAssessments = query({
             return [];
         }
 
+        if (!identity.orgId) {
+            return [];
+        }
         return ctx.db
             .query("assessments")
-            .withIndex("by_orgId", (q) => q.eq("orgId", identity?.orgId))
+            .withIndex("by_orgId", (q) => q.eq("orgId", identity.orgId as Id<"organizations">))
             .order("desc")
             .collect();
+    },
+});
 
-        // Query for the admin to get all assessments
-        export const getAllAssessments = query({
-            handler: async (ctx) => {
-                const identity = await ctx.auth.getUserIdentity();
-                if (!identity) {
-                    throw new Error("You are not authorized to view this.");
-                }
+// Query for the admin to get all assessments
+export const getAllAssessments = query({
+    handler: async (ctx) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) {
+            throw new Error("You are not authorized to view this.");
+        }
 
-                // Simple authorization: check if the user is the designated admin
-                if (identity.subject !== process.env.ADMIN_USER_ID) {
-                    throw new Error("You are not authorized to view this.");
-                }
+        // Simple authorization: check if the user is the designated admin
+        if (identity.subject !== process.env.ADMIN_USER_ID) {
+            throw new Error("You are not authorized to view this.");
+        }
 
-                return ctx.db.query("assessments").order("desc").collect();
-            },
-        });
+        return ctx.db.query("assessments").order("desc").collect();
+    },
+});
+
+// NEW QUERY: Get all assessments for the user's active organization
+export const getByOrg = query({
+    args: {
+        orgId: v.id('organizations'), // The Clerk Organization ID
+        userId: v.id("users"), // The Clerk User ID
+    },
+    handler: async (ctx) => {
+        // Get the user's identity, which includes their active orgId
+        const identity = await ctx.auth.getUserIdentity();
+
+        // If the user is not authenticated or has no active organization, return nothing
+        if (!identity || !identity.orgId) {
+            return [];
+        }
+
+        // Fetch all assessments that match the user's orgId and order by creation time
+        return ctx.db
+            .query("assessments")
+            .withIndex("by_orgId", (q) => q.eq("orgId", identity.orgId as Id<"organizations">))
+            .order("desc")
+            .collect();
+    },
+});

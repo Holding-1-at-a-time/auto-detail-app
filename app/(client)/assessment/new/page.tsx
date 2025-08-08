@@ -28,6 +28,8 @@ import {
 } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@clerk/clerk-react";
+import { Id } from "convex/values";
 
 // Define the form schema using Zod for validation
 const formSchema = z.object({
@@ -52,7 +54,7 @@ export default function NewAssessmentPage() {
     const createAssessment = useMutation(api.assessments.createAssessment);
     const router = useRouter();
 
-    const form = useForm<z.infer<typeof formSchema>>({
+    const form = useForm<z.infer<(typeof formSchema)>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
             clientName: "",
@@ -63,14 +65,28 @@ export default function NewAssessmentPage() {
             notes: "",
         },
     });
-
     async function onSubmit(values: z.infer<typeof formSchema>) {
-        await createAssessment(values);
+        // You must provide orgId and userId as required by the mutation
+        // Replace the following with your actual logic to get orgId and userId
+        const { data: org } = await api.organizations.getOrganizationForUser();
+        const orgId = org?.id;
+
+        const { userId } = useAuth();
+
+        if (!orgId || !userId) {
+            console.error("Failed to get orgId or userId");
+            return;
+        }
+
+        await createAssessment({
+            ...values,
+            orgId,
+            userId: Id<'users>',
+        });
         form.reset();
         // Redirect to a dashboard page after successful submission
         router.push("/dashboard");
     }
-
     return (
         <Card className="max-w-2xl mx-auto">
             <CardHeader>

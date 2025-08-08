@@ -1,6 +1,6 @@
 // app/(app)/layout.tsx
-import Header from "@/components/nav/Header"; // You'll need to create/update this
-import { OrganizationSwitcher, useSession } from "@clerk/nextjs";
+import Header from "@/components/nav/Header";
+import { OrganizationSwitcher, useSession, useOrganization } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -12,20 +12,24 @@ export interface AppLayoutProps {
     };
 }
 
+function GetToken(): { orgId: string | null } {
+    const { organization } = useOrganization();
+    const orgId = organization?.id || null;
+
+    return { orgId };
+}
+
+export { GetToken };
+
 export default function AppLayout({
     children,
     params,
 }: AppLayoutProps) {
-    const session = useSession();
-    const { orgId } = getToken();
+    const { orgId } = GetToken();
 
     // Redirect if the user is not in an organization
-    if (!orgId && !session) {
-        if (session) {
-            return redirect(`/${params.organizationId}/dashboard`);
-        } else {
-            return redirect('/create-organization');
-        }
+    if (!orgId) {
+        return redirect('/create-organization');
     }
 
     return (
@@ -54,7 +58,3 @@ export default function AppLayout({
         </>
     );
 }
-function getToken(): { orgId: any; } {
-    throw new Error("Function not implemented.");
-}
-
