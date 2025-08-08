@@ -87,6 +87,8 @@ export const getMyAssessments = query({
             .collect();
     },
 });
+    },
+});
 
 // Query for the admin to get all assessments
 export const getAllAssessments = query({
@@ -95,7 +97,18 @@ export const getAllAssessments = query({
         if (!identity) {
             throw new Error("You are not authorized to view this.");
         }
+// Query for the admin to get all assessments
+export const getAllAssessments = query({
+    handler: async (ctx) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) {
+            throw new Error("You are not authorized to view this.");
+        }
 
+        // Simple authorization: check if the user is the designated admin
+        if (identity.subject !== process.env.ADMIN_USER_ID) {
+            throw new Error("You are not authorized to view this.");
+        }
         // Simple authorization: check if the user is the designated admin
         if (identity.subject !== process.env.ADMIN_USER_ID) {
             throw new Error("You are not authorized to view this.");
@@ -126,5 +139,58 @@ export const getByOrg = query({
             .withIndex("by_orgId", (q) => q.eq("orgId", identity.orgId as Id<"organizations">))
             .order("desc")
             .collect();
+    },
+});
+        return ctx.db.query("assessments").order("desc").collect();
+    },
+});
+
+// Get a single assessment by its ID
+export const getAssessmentById = query({
+    args: {
+        assessmentId: v.id("assessments"),
+    },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) {
+            throw new Error("You must be logged in to view an assessment.");
+        }
+
+        return ctx.db.get(args.assessmentId);
+    },
+});
+
+// Mutation to update the status of an assessment
+export const updateAssessmentStatus = mutation({
+    args: {
+        assessmentId: v.id("assessments"),
+        status: v.union(
+            v.literal("pending"),
+            v.literal("reviewed"),
+            v.literal("complete")
+        ),
+    },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) {
+            throw new Error("You must be logged in to update an assessment.");
+        }
+
+        await ctx.db.patch(args.assessmentId, { status: args.status });
+    },
+});
+
+// Mutation to delete an assessment
+export const deleteAssessment = mutation({
+    args: {
+        assessmentId: v.id("assessments"),
+    },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) {
+            throw new Error("You must be logged in to delete an assessment.");
+        }
+
+        await ctx.db.delete(args.assessmentId);
     },
 });

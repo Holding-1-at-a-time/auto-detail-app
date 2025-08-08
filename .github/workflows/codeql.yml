@@ -44,7 +44,7 @@ jobs:
       matrix:
         include:
         - language: javascript-typescript
-          build-mode: auto-build
+          build-mode: none
         # CodeQL supports the following values keywords for 'language': 'actions', 'c-cpp', 'csharp', 'go', 'java-kotlin', 'javascript-typescript', 'python', 'ruby', 'rust', 'swift'
         # Use `c-cpp` to analyze code written in C, C++ or both
         # Use 'java-kotlin' to analyze code written in Java, Kotlin or both
@@ -80,10 +80,10 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: '20' # Or your project's version
-        cache: 'pnpm' # Use 'yarn' or 'pnpm' if you use those
+        cache: 'npm' # Use 'yarn' or 'pnpm' if you use those
 
-    - name: Install dependencies
-      run: pnpm install
+  #  - name: Install dependencies
+  #    run: npm install -g pnpm
 
     - name: Build project
       run: npm run build --if-present # Use --if-present to avoid errors if you have no build script
