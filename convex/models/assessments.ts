@@ -31,10 +31,15 @@ export async function createAssessmentModel(
 
   let clientId: Id<"clients">;
 
+  // Normalize inputs for matching/insert
+  const normalizedName = args.client.name.trim().toLocaleLowerCase();
+  const normalizedEmail = args.client.email?.trim().toLocaleLowerCase();
+  const normalizedPhone = args.client.phone?.replace(/\D+/g, "");
+
   const existingClient = await ctx.db
     .query("clients")
     .withIndex("by_orgId_and_name", (q) =>
-      q.eq("orgId", args.orgId).eq("name", args.client.name)
+      q.eq("orgId", args.orgId).eq("name", normalizedName)
     )
     .first();
 
@@ -44,12 +49,11 @@ export async function createAssessmentModel(
     clientId = await ctx.db.insert("clients", {
       orgId: args.orgId,
       userId: args.userId,
-      name: args.client.name,
-      email: args.client.email,
-      phone: args.client.phone,
+      name: normalizedName,
+      email: normalizedEmail,
+      phone: normalizedPhone,
     });
   }
-
   const serviceIds = args.services
     .map((service) => ctx.db.normalizeId("services", service))
     .filter((id): id is Id<"services"> => id !== null);
