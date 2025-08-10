@@ -85,6 +85,7 @@ export function Combobox({
                   />
                   {option.label}
                 </CommandItem>
+              ))}
             </CommandGroup>
           </CommandList>
         </Command>
