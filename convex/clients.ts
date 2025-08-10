@@ -1,7 +1,6 @@
 // convex/clients.ts
 import { query } from "./_generated/server";
 import { v } from "convex/values";
-import { Id } from "./_generated/dataModel";
 
 // Query to get all clients for the user's active organization
 export const listByOrg = query({
