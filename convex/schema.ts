@@ -21,7 +21,6 @@ export default defineSchema({
     userId: v.id("users"),
     name: v.string(),
     price: v.number(),
-    clientName: v.string(),
     carMake: v.string(),
     carModel: v.string(),
     carYear: v.number(),
@@ -36,7 +35,6 @@ export default defineSchema({
 
   }).index("by_orgId", ["orgId"])
     .index("by_name", ["name"])
-    .index("by_clientName", ["clientName"])
     .index("by_price", ["price"]),
 
 
@@ -44,6 +42,7 @@ export default defineSchema({
   assessments: defineTable({
     orgId: v.id('organizations'), // The Clerk Organization ID
     userId: v.id("users"), // The Clerk User ID
+    clientId: v.id("clients"),
     serviceId: v.id("services"), // The Service ID
     clientName: v.string(),
     carMake: v.string(),
@@ -60,7 +59,8 @@ export default defineSchema({
   }).index("by_orgId", ["orgId"])
     .index("by_userId", ["userId"])
     .index("by_status", ["status"])
-    .index("by_serviceIds", ["serviceIds"]),
+    .index("by_serviceIds", ["serviceIds"])
+    .index("by_clientId", ["clientId"]),
 
   // User profile now includes the organization ID
   users: defineTable({
@@ -143,4 +143,18 @@ export default defineSchema({
     .index("by_clerk_subscription_id", ["clerkSubscriptionId"])
     .index("by_org_id", ["orgId"]),
 
+  clients: defineTable({
+    orgId: v.id("organizations"),
+    userId: v.id("users"),
+    name: v.string(),
+    email: v.optional(v.string()),
+    phone: v.optional(v.string()),
+  }).index("by_orgId", ["orgId"])
+    .index("by_name", ["name"])
+    .index("by_orgId_and_name", ["orgId", "name"])
+    .index("by_orgId_and_email", ["orgId", "email"])
+    .searchIndex("search_name", {
+      searchField: "name",
+      filterFields: ["orgId"],
+    }),
 });

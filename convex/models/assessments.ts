@@ -5,12 +5,17 @@ import { Id } from "../_generated/dataModel";
 export type AssessmentStatus = "pending" | "reviewed" | "complete";
 
 export type CreateAssessmentInput = {
-  orgId: Id<"organizations">; // The Clerk Organization ID
-  userId: Id<"users">; // The Clerk User ID
-  clientName: string;
+  orgId: Id<"organizations">;
+  userId: Id<"users">;
+  client: {
+    name: string;
+    email?: string;
+    phone?: string;
+  };
   carMake: string;
   carModel: string;
   carYear: number;
+
   carColor: string; // Added missing property
   services: string[]; // Service document IDs as strings; will be normalized
   notes?: string;
@@ -26,12 +31,51 @@ export async function createAssessmentModel(
     throw new Error("You must be logged in to create an assessment.");
   }
 
+  let clientId: Id<"clients">;
+
+  // Prioritize finding client by email if provided, as it's more likely to be unique
+  if (args.client.email) {
+    const clientByEmail = await ctx.db
+      .query("clients")
+      .withIndex("by_orgId_and_email", (q) =>
+        q.eq("orgId", args.orgId).eq("email", args.client.email)
+      )
+      .first();
+    if (clientByEmail) {
+      clientId = clientByEmail._id;
+    }
+  }
+
+  // If client not found by email, try finding by name
+  if (!clientId) {
+      const clientByName = await ctx.db
+        .query("clients")
+        .withIndex("by_orgId_and_name", (q) =>
+          q.eq("orgId", args.orgId).eq("name", args.client.name)
+        )
+        .first();
+      if (clientByName) {
+          clientId = clientByName._id;
+      }
+  }
+
+  // If client is still not found, create a new one
+  if (!clientId) {
+    clientId = await ctx.db.insert("clients", {
+      orgId: args.orgId,
+      userId: args.userId,
+      name: args.client.name,
+      email: args.client.email,
+      phone: args.client.phone,
+    });
+  }
+
   const serviceIds = args.services
     .map((service) => ctx.db.normalizeId("services", service))
     .filter((id): id is Id<"services"> => id !== null);
 
   return await ctx.db.insert("assessments", {
-    clientName: args.clientName,
+    clientId: clientId,
     carMake: args.carMake,
     carModel: args.carModel,
     carYear: args.carYear,
