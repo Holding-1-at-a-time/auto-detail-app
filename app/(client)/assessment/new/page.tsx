@@ -1,16 +1,16 @@
 // app/assessment/new/page.tsx
 "use client";
 
-import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useMutation, useQuery } from "convex/react";
+import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { useOrganization, useAuth } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
-import { Check, ChevronsUpDown } from "lucide-react";
+import React, { useState } from "react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -32,16 +32,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
-import {
-  Command,
-  CommandInput,
-  CommandList,
-  CommandEmpty,
-  CommandGroup,
-  CommandItem,
-} from "@/components/ui/command";
-import { cn } from "@/lib/utils";
+import ClientSelector from "./ClientSelector";
 
 const formSchema = z.object({
   clientName: z.string().min(2, "Name must be at least 2 characters."),
@@ -73,15 +64,11 @@ const serviceOptions = [
  * If the mutation is successful, the page will redirect to a dashboard page.
  */
 export default function NewAssessmentPage() {
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const createAssessment = useMutation(api.assessments.createAssessment);
   const router = useRouter();
   const { organization } = useOrganization();
   const { userId } = useAuth();
-
-  const [searchClientName, setSearchClientName] = useState("");
-  const [debouncedSearchClientName, setDebouncedSearchClientName] = useState("");
-  const [isClientSelectorOpen, setClientSelectorOpen] = useState(false);
-  const [selectedClientId, setSelectedClientId] = useState<Id<"clients"> | null>(null);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -97,52 +84,39 @@ export default function NewAssessmentPage() {
     },
   });
 
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedSearchClientName(searchClientName);
-    }, 300);
-    return () => clearTimeout(handler);
-  }, [searchClientName]);
-
-  const searchResults = useQuery(
-    api.clients.searchByName,
-    debouncedSearchClientName && organization?.id
-      ? { name: debouncedSearchClientName, orgId: organization.id as Id<"organizations"> }
-      : "skip"
-  );
-
-  const handleClientSelect = (client: { _id: Id<"clients">, name: string, email?: string | null, phone?: string | null }) => {
-    form.setValue("clientName", client.name);
-    form.setValue("clientEmail", client.email ?? "");
-    form.setValue("clientPhone", client.phone ?? "");
-    setSelectedClientId(client._id);
-    setClientSelectorOpen(false);
-    setSearchClientName("");
-  };
-
   async function onSubmit(values: FormValues) {
     if (!organization?.id || !userId) {
-      console.error("No organization or user ID found");
+      toast.error("Organization and user must be identified to create an assessment.");
       return;
     }
 
-    await createAssessment({
-      orgId: organization.id as Id<"organizations">,
-      userId: userId as Id<"users">,
-      client: {
-        name: values.clientName,
-        email: values.clientEmail,
-        phone: values.clientPhone,
-      },
-      carMake: values.carMake,
-      carModel: values.carModel,
-      carYear: values.carYear,
-      services: values.services,
-      notes: values.notes,
-    });
+    setIsSubmitting(true);
+    try {
+      await createAssessment({
+        orgId: organization.id as Id<"organizations">,
+        userId: userId as Id<"users">,
+        client: {
+          name: values.clientName,
+          email: values.clientEmail,
+          phone: values.clientPhone,
+        },
+        carMake: values.carMake,
+        carModel: values.carModel,
+        carYear: values.carYear,
+        services: values.services,
+        notes: values.notes,
+      });
 
-    form.reset();
-    router.push(`/${organization.id}/dashboard`);
+      toast.success("Assessment created successfully!");
+      form.reset();
+      router.push(`/${organization.id}/dashboard`);
+
+    } catch (error) {
+      toast.error("Failed to create assessment. Please try again.");
+      console.error("Failed to create assessment:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -157,84 +131,7 @@ export default function NewAssessmentPage() {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
 
-            <div className="space-y-4 p-4 border rounded-md">
-              <h3 className="text-lg font-medium">Client Information</h3>
-              <Popover open={isClientSelectorOpen} onOpenChange={setClientSelectorOpen}>
-                <PopoverTrigger asChild>
-                  <FormControl>
-                      <FormField
-                        control={form.control}
-                        name="clientName"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Client Name</FormLabel>
-                            <Input
-                              placeholder="Search or enter new client..."
-                              {...field}
-                              onChange={(e) => {
-                                field.onChange(e);
-                                setSearchClientName(e.target.value);
-                                setSelectedClientId(null);
-                              }}
-                            />
-                          </FormItem>
-                        )}
-                      />
-                  </FormControl>
-                </PopoverTrigger>
-                <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-                  <Command>
-                    <CommandList>
-                      {searchResults && searchResults.length > 0 ? (
-                        <CommandGroup heading="Existing Clients">
-                          {searchResults.map((client) => (
-                            <CommandItem
-                              key={client._id}
-                              onSelect={() => handleClientSelect(client)}
-                              value={client.name}
-                            >
-                              <Check className={cn("mr-2 h-4 w-4", selectedClientId === client._id ? "opacity-100" : "opacity-0")} />
-                              {client.name}
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      ) : (
-                        <CommandEmpty>
-                          {debouncedSearchClientName ? "No clients found. Continue typing to create a new client." : "Start typing to search for a client."}
-                        </CommandEmpty>
-                      )}
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
-
-              <FormField
-                control={form.control}
-                name="clientEmail"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Client Email</FormLabel>
-                    <FormControl>
-                      <Input placeholder="client@email.com" {...field} readOnly={!!selectedClientId} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="clientPhone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Client Phone</FormLabel>
-                    <FormControl>
-                      <Input placeholder="(123) 456-7890" {...field} readOnly={!!selectedClientId} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+            <ClientSelector form={form} />
 
             <div className="space-y-4 p-4 border rounded-md">
               <h3 className="text-lg font-medium">Vehicle Information</h3>
@@ -291,7 +188,9 @@ export default function NewAssessmentPage() {
               )}
             />
 
-            <Button type="submit">Submit for Review</Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Submitting..." : "Submit for Review"}
+            </Button>
           </form>
         </Form>
       </CardContent>
