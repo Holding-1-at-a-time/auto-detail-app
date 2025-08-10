@@ -13,7 +13,6 @@
 // convex/schema.ts
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
-import { no } from "zod/locales";
 
 export default defineSchema({
   // NEW: Table to store business-specific services

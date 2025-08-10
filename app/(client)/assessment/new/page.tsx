@@ -252,7 +252,7 @@ export default function NewAssessmentPage() {
                         />
 
                         <Button type="submit" disabled={!organization || !currentUser || form.formState.isSubmitting}>
-                            Submit for Review
+                            {form.formState.isSubmitting ? "Submitting..." : "Submit for Review"}
                         </Button>
                     </form>
                 </Form>

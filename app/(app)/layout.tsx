@@ -39,13 +39,14 @@ export default function AppLayout({
                 <nav className="w-64 border-r border-white/10 p-4">
                     <h2 className="font-bold mb-4">Navigation</h2>
                     <ul>
-                        <li>
-                            <Link href={`/${params.organizationId}/dashboard`}>Dashboard</Link>
-                        </li>
-                        <li>
-                            <Link href={`/${params.organizationId}/settings`}>Settings</Link>
-                        </li>
-                        {/* Add more links here */}
+                        {[
+                            { label: "Dashboard", path: "dashboard" },
+                            { label: "Settings", path: "settings" },
+                        ].map((item) => (
+                            <li key={item.path}>
+                                <Link href={`/${params.organizationId}/${item.path}`}>{item.label}</Link>
+                            </li>
+                        ))}
                     </ul>
                     <div className="mt-auto pt-4">
                         <OrganizationSwitcher hidePersonal={true} />
