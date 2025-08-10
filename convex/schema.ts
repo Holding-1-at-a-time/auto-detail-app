@@ -44,9 +44,12 @@ export default defineSchema({
     orgId: v.id('organizations'), // The Clerk Organization ID
     userId: v.id("users"), // The Clerk User ID
     clientId: v.id("clients"),
+    serviceId: v.id("services"), // The Service ID
+    clientName: v.string(),
     carMake: v.string(),
     carModel: v.string(),
     carYear: v.number(),
+    carColor: v.string(),
     serviceIds: v.array(v.id("services")), // Link to the services table
     notes: v.optional(v.string()),
     status: v.union(

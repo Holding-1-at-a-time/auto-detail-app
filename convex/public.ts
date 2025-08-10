@@ -67,6 +67,7 @@ export const publicCreateAssessment = mutation({
     carMake: v.string(),
     carModel: v.string(),
     carYear: v.number(),
+    carColor: v.optional(v.string()),
     serviceIds: v.array(v.id("services")),
     notes: v.optional(v.string()),
   },
@@ -90,6 +91,12 @@ export const publicCreateAssessment = mutation({
     if (!args.carModel) {
       throw new Error("Missing carModel");
     }
+    if (!args.carYear) {
+      throw new Error("Missing carYear");
+    }
+    if (!args.carColor) {
+      throw new Error("Missing carColor");
+    }
     if (!args.serviceIds) {
       throw new Error("Missing serviceIds");
     }
@@ -97,6 +104,8 @@ export const publicCreateAssessment = mutation({
       return await ctx.db.insert("assessments", {
         ...args,
         status: "pending",
+        carColor: args.carColor,
+        serviceId: args.serviceIds[0], // Assuming the first service is the main one
       });
     } catch (e) {
       console.error("Error creating assessment:", e);

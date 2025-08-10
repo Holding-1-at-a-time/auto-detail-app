@@ -17,7 +17,7 @@ on:
   pull_request:
     branches: [ "main" ]
   schedule:
-    - cron: '27 23 * * 0'
+    - cron: '35 6 * * 0'
 
 jobs:
   analyze:
@@ -68,7 +68,6 @@ jobs:
       uses: github/codeql-action/init@v3
       with:
         languages: ${{ matrix.language }}
-        config-file: ./.github/codeql/codeql-config.yml
         build-mode: ${{ matrix.build-mode }}
         # If you wish to specify custom queries, you can do so here or in a config file.
         # By default, queries listed here will override any specified in a config file.
@@ -76,18 +75,6 @@ jobs:
 
         # For more details on CodeQL's query packs, refer to: https://docs.github.com/en/code-security/code-scanning/automatically-scanning-your-code-for-vulnerabilities-and-errors/configuring-code-scanning#using-queries-in-ql-packs
         queries: security-extended,security-and-quality
-    - name: Set up Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20' # Or your project's version
-        cache: 'npm' # Use 'yarn' or 'pnpm' if you use those
-
-  #  - name: Install dependencies
-  #    run: npm install -g pnpm
-
-    - name: Build project
-      run: npm run build --if-present # Use --if-present to avoid errors if you have no build script
-
 
     # If the analyze step fails for one of the languages you are analyzing with
     # "We were unable to automatically build your code", modify the matrix above
