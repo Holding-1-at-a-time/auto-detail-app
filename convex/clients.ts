@@ -63,7 +63,7 @@ export const getClientById = query({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
-      throw new Error("You must be logged in to view a client.");
+      return null;
     }
 
     const client = await ctx.db.get(args.clientId);
