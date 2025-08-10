@@ -46,7 +46,7 @@ interface ClientSelectorProps {
 }
 
 export default function ClientSelector({ form }: ClientSelectorProps) {
-  const { organization } = useOrganization();
+  useOrganization();
   const [searchClientName, setSearchClientName] = useState("");
   const [debouncedSearchClientName, setDebouncedSearchClientName] = useState("");
   const [isClientSelectorOpen, setClientSelectorOpen] = useState(false);
