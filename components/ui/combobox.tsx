@@ -69,7 +69,7 @@ export function Combobox({
                   key={option.value}
                   value={option.value}
                   onSelect={(currentValue) => {
-                    onChange(currentValue === value ? "" : currentValue)
+                    onChange(currentValue === value ? null : currentValue)
                     setOpen(false)
                   }}
                 >
