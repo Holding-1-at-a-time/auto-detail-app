@@ -33,19 +33,6 @@ interface ComboboxProps {
   emptyPlaceholder?: string;
 }
 
-/**
- * Renders a searchable dropdown combobox for selecting an option from a list.
- *
- * Displays the selected option's label or a placeholder, and allows users to filter and choose options via a popover. Selecting an already-selected option clears the selection. The component provides customizable placeholders for the main button, search input, and empty state.
- *
- * @param options - The list of selectable options, each with a value and label.
- * @param value - The currently selected option's value, or undefined if none is selected.
- * @param onChange - Callback invoked with the new value when the selection changes, or an empty string if the selection is cleared.
- * @param placeholder - Placeholder text shown when no option is selected.
- * @param searchPlaceholder - Placeholder text for the search input field.
- * @param emptyPlaceholder - Text displayed when no options match the search.
- * @returns The combobox React element.
- */
 export function Combobox({
   options,
   value,

@@ -66,14 +66,6 @@ const serviceOptions = [
     { id: "ceramic-coating", label: "Ceramic Coating" },
 ] as const;
 
-/**
- * Renders a form page for creating a new vehicle assessment, allowing users to search for or enter client information, specify vehicle details, select requested services, and add notes.
- *
-
- * This page displays a form with input fields for client name, car make, car model, car year, services requested, and additional notes.
- * When the form is submitted, the page will call the `createAssessment` mutation to create a new assessment document in the database.
- * On success, the form resets and navigation proceeds to the organization dashboard.
- */
 export default function NewAssessmentPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const createAssessment = useMutation(api.assessments.createAssessment);
@@ -117,14 +109,6 @@ export default function NewAssessmentPage() {
     setClientSelectorOpen(false);
     setSearchClientName("");
   };
-
-  /**
-   * Submits the new assessment form data to create a vehicle assessment for the current organization and user.
-   *
-   * If the organization or user ID is missing, the submission is aborted.
-   *
-   * @param values - The validated form values containing client information, vehicle details, selected services, and notes
-   */
   async function onSubmit(values: FormValues) {
     if (!organization?.id || !userId) {
       toast.error("Organization and user must be identified to create an assessment.");
