@@ -80,29 +80,31 @@ export default function ClientSelector({ form }: ClientSelectorProps) {
     <div className="space-y-4 p-4 border rounded-md">
       <h3 className="text-lg font-medium">Client Information</h3>
       <Popover open={isClientSelectorOpen} onOpenChange={setClientSelectorOpen}>
-        <PopoverTrigger asChild>
-            <FormField
-              control={form.control}
-              name="clientName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Client Name</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Search or enter new client..."
-                      {...field}
-                      onChange={(e) => {
-                        field.onChange(e);
-                        setSearchClientName(e.target.value);
-                        setSelectedClientId(null);
-                      }}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-        </PopoverTrigger>
+        <FormField
+          control={form.control}
+          name="clientName"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Client Name</FormLabel>
+              <FormControl>
+                <PopoverTrigger asChild>
+                  <Input
+                    placeholder="Search or enter new client..."
+                    {...field}
+                    onFocus={() => setClientSelectorOpen(true)}
+                    onChange={(e) => {
+                      field.onChange(e);
+                      setSearchClientName(e.target.value);
+                      setSelectedClientId(null);
+                      setClientSelectorOpen(true);
+                    }}
+                  />
+                </PopoverTrigger>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
           <Command>
             <CommandList>
