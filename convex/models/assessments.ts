@@ -29,19 +29,17 @@ export async function createAssessmentModel(
     .map((service) => ctx.db.normalizeId("services", service))
     .filter((id): id is Id<"services"> => id !== null);
 
-  const assessmentId = await ctx.db.insert("assessments", {
-    clientName: args.clientName,
-    carMake: args.carMake,
-    carModel: args.carModel,
-    carYear: args.carYear,
-    serviceIds,
-    notes: args.notes,
-    orgId: args.orgId,
-    userId: args.userId,
-    status: "pending" as AssessmentStatus,
-  });
-
-  return assessmentId;
+  return await ctx.db.insert("assessments", {
+      clientName: args.clientName,
+      carMake: args.carMake,
+      carModel: args.carModel,
+      carYear: args.carYear,
+      serviceIds,
+      notes: args.notes,
+      orgId: args.orgId,
+      userId: args.userId,
+      status: "pending" as AssessmentStatus,
+    });
 }
 
 // Delete an assessment by Id

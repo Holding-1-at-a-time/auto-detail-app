@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { Id } from "@convex/types";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -29,7 +30,6 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@clerk/clerk-react";
-import { Id } from "convex/values";
 
 // Define the form schema using Zod for validation
 const formSchema = z.object({
@@ -50,6 +50,13 @@ const serviceOptions = [
     { id: "ceramic-coating", label: "Ceramic Coating" },
 ];
 
+/**
+ * Page for creating a new vehicle assessment.
+ *
+ * This page displays a form with input fields for client name, car make, car model, car year, services requested, and additional notes.
+ * When the form is submitted, the page will call the `createAssessment` mutation to create a new assessment document in the database.
+ * If the mutation is successful, the page will redirect to a dashboard page.
+ */
 export default function NewAssessmentPage() {
     const createAssessment = useMutation(api.assessments.createAssessment);
     const router = useRouter();
@@ -81,7 +88,7 @@ export default function NewAssessmentPage() {
         await createAssessment({
             ...values,
             orgId,
-            userId: Id < 'users>',
+            userId: userId as Id<"users">,
         });
         form.reset();
         // Redirect to a dashboard page after successful submission
