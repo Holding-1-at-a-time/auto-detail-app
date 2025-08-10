@@ -5,7 +5,7 @@ import { useQuery } from "convex/react";
 import { useOrganization } from "@clerk/nextjs";
 import { UseFormReturn } from "react-hook-form";
 import { z } from "zod";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check } from "lucide-react";
 
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
