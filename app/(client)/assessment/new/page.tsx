@@ -146,9 +146,27 @@ export default function NewAssessmentPage() {
             <div className="space-y-4 p-4 border rounded-md">
               <h3 className="text-lg font-medium">Vehicle Information</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <FormField control={form.control} name="carMake" render={({ field }) => (<FormItem><FormLabel>Car Make</FormLabel><FormControl><Input placeholder="Toyota" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                <FormField control={form.control} name="carModel" render={({ field }) => (<FormItem><FormLabel>Car Model</FormLabel><FormControl><Input placeholder="Camry" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                <FormField control={form.control} name="carYear" render={({ field }) => (<FormItem><FormLabel>Year</FormLabel><FormControl><Input type="number" placeholder="2024" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="carMake" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Car Make</FormLabel>
+                    <FormControl><Input placeholder="Toyota" {...field} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+                <FormField control={form.control} name="carModel" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Car Model</FormLabel>
+                    <FormControl><Input placeholder="Camry" {...field} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+                <FormField control={form.control} name="carYear" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Year</FormLabel>
+                    <FormControl><Input type="number" placeholder="2024" {...field} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
               </div>
             </div>
 
@@ -170,9 +188,14 @@ export default function NewAssessmentPage() {
                         render={({ field }) => (
                           <FormItem key={item.id} className="flex flex-row items-start space-x-3 space-y-0">
                             <FormControl>
-                              <Checkbox checked={field.value?.includes(item.id)} onCheckedChange={(checked) => {
-                                return checked ? field.onChange([...field.value, item.id]) : field.onChange(field.value?.filter((value) => value !== item.id));
-                              }} />
+                              <Checkbox
+                                checked={field.value?.includes(item.id)}
+                                onCheckedChange={(checked) => {
+                                  return checked
+                                    ? field.onChange([...(field.value || []), item.id])
+                                    : field.onChange(field.value?.filter((v) => v !== item.id));
+                                }}
+                              />
                             </FormControl>
                             <FormLabel className="font-normal">{item.label}</FormLabel>
                           </FormItem>
@@ -192,7 +215,11 @@ export default function NewAssessmentPage() {
                 <FormItem>
                   <FormLabel>Additional Notes</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="e.g., specific stains, scratches, or areas of concern" className="resize-none" {...field} />
+                    <Textarea
+                      placeholder="e.g., specific stains, scratches, or areas of concern"
+                      className="resize-none"
+                      {...field}
+                    />
                   </FormControl>
                 </FormItem>
               )}
