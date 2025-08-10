@@ -69,12 +69,14 @@ export function Combobox({
                 <CommandItem
                   key={option.value}
                   value={option.value}
+                  aria-selected={value === option.value}
                   onSelect={(currentValue) => {
                     onChange(currentValue === value ? null : currentValue)
                     setOpen(false)
                   }}
                 >
                   <Check
+                    aria-hidden="true"
                     className={cn(
                       "mr-2 h-4 w-4",
                       value === option.value ? "opacity-100" : "opacity-0"
@@ -82,7 +84,6 @@ export function Combobox({
                   />
                   {option.label}
                 </CommandItem>
-              ))}
             </CommandGroup>
           </CommandList>
         </Command>
