@@ -60,13 +60,15 @@ export default function ClientSelector({ form }: ClientSelectorProps) {
     return () => clearTimeout(handler);
   }, [searchClientName]);
 
+  // Resolve the Convex organization doc (uses Clerk identity under the hood)
+  const orgDoc = useQuery(api.organizations.getOrganization);
+
   const searchResults = useQuery(
     api.clients.searchByName,
-    debouncedSearchClientName && organization?.id
-      ? { name: debouncedSearchClientName, orgId: organization.id as Id<"organizations"> }
+    debouncedSearchClientName.length >= 2 && orgDoc?._id
+      ? { name: debouncedSearchClientName, orgId: orgDoc._id }
       : "skip"
   );
-
   const handleClientSelect = (client: { _id: Id<"clients">, name: string, email?: string | null, phone?: string | null }) => {
     form.setValue("clientName", client.name);
     form.setValue("clientEmail", client.email ?? "");
