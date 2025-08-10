@@ -3,5 +3,6 @@
     "Graphene",
     "svix",
     "tablename"
-  ]
+  ],
+  "codium.codeCompletion.enable": true
 }

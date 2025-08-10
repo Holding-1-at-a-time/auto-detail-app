@@ -1,16 +1,21 @@
 // middleware.ts
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+import { clerkMiddleware, createRouteMatcher, type ClerkMiddlewareAuth } from '@clerk/nextjs/server';
+import { NextResponse, type NextRequest } from 'next/server';
 
-const isProtectedRoute = createRouteMatcher([
+const isProtectedRoute: (req: NextRequest) => boolean = createRouteMatcher([
   '/(app)(.*)', // Protect all routes inside the (app) group
 ]);
 
-export default clerkMiddleware((auth, req) => {
+export default clerkMiddleware(async (auth: ClerkMiddlewareAuth, req: NextRequest) => {
   if (isProtectedRoute(req)) {
-    auth().protect();
+    const session = await auth();
+    if (!session.userId) {
+      return session.protect();
+    }
   }
+  return NextResponse.next();
 });
 
-export const config = {
-  matcher: ["/((?!.*\\..*|_next).*)", "/", "/(api|trpc)(.*)"],
+export const config: { matcher: string[] } = {
+  matcher: ['/((?!.*\\..*|_next).*)', '/', '/(api|trpc)(.*)'],
 };

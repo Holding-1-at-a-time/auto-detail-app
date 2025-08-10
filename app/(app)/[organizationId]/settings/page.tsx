@@ -57,7 +57,9 @@ function ManageServicesCard() {
                 clientName,
                 carMake,
                 carModel,
-                carYear
+                carYear,
+                carColor: '',
+                status: 'pending'
             });
             toast.success("New service has been added.");
             event.currentTarget.reset();
@@ -112,7 +114,9 @@ function BookingLinkCard() {
     const { organization } = useOrganization();
     const qrCodeRef = useRef<HTMLDivElement>(null);
 
-    if (!organization) return null;
+    if (!organization) {
+      return null;
+    }
 
     const bookingUrl = `${window.location.origin}/book/${organization.slug}`;
 

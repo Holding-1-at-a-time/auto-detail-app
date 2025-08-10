@@ -2,6 +2,11 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
+import {
+  createAssessmentModel,
+  deleteAssessmentModel,
+  updateAssessmentStatusModel,
+} from "./models/assessments";
 
 // Mutation to create a new assessment
 export const createAssessment = mutation({
@@ -16,26 +21,7 @@ export const createAssessment = mutation({
     notes: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("You must be logged in to create an assessment.");
-    }
-
-    const serviceIds = args.services
-      .map((service) => ctx.db.normalizeId("services", service))
-      .filter((id): id is Id<"services"> => id !== null);
-
-    return await ctx.db.insert("assessments", {
-      clientName: args.clientName,
-      carMake: args.carMake,
-      carModel: args.carModel,
-      carYear: args.carYear,
-      serviceIds: serviceIds,
-      notes: args.notes,
-      orgId: args.orgId,
-      userId: args.userId,
-      status: "pending",
-    });
+    return createAssessmentModel(ctx, args);
   },
 });
 
@@ -45,12 +31,7 @@ export const deleteAssessment = mutation({
     assessmentId: v.id("assessments"),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("You must be logged in to delete an assessment.");
-    }
-
-    await ctx.db.delete(args.assessmentId);
+    await deleteAssessmentModel(ctx, args.assessmentId);
   },
 });
 
@@ -65,12 +46,7 @@ export const updateAssessmentStatus = mutation({
     ),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("You must be logged in to update an assessment.");
-    }
-
-    await ctx.db.patch(args.assessmentId, { status: args.status });
+    await updateAssessmentStatusModel(ctx, args.assessmentId, args.status);
   },
 });
 
