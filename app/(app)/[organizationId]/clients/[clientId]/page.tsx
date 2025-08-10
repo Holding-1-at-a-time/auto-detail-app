@@ -22,6 +22,11 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
+/**
+ * Displays detailed information about a client, including contact details and a table of their assessment history.
+ *
+ * Extracts the client ID from the URL, fetches client data and associated assessments, and renders the information with appropriate loading and error states.
+ */
 export default function ClientDetailsPage() {
   const params = useParams();
   const clientId = params.clientId as Id<"clients">;

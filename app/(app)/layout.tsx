@@ -21,6 +21,15 @@ function GetToken(): { orgId: string | null } {
 
 export { GetToken };
 
+/**
+ * Renders the main application layout with a header, sidebar navigation, and content area, enforcing organization context.
+ *
+ * Redirects users to the organization creation page if no organization is selected. The sidebar navigation links are dynamically generated based on the current organization ID.
+ *
+ * @param children - The content to display within the main area of the layout
+ * @param params - Contains the current organization ID used for navigation links
+ * @returns The complete application layout or a redirect if no organization is present
+ */
 export default function AppLayout({
     children,
     params,
