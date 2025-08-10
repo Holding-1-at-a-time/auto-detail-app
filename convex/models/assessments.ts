@@ -75,8 +75,7 @@ export async function createAssessmentModel(
     .filter((id): id is Id<"services"> => id !== null);
 
   return await ctx.db.insert("assessments", {
-
-    clientName: args.clientName,
+    clientId: clientId,
     carMake: args.carMake,
     carModel: args.carModel,
     carYear: args.carYear,
