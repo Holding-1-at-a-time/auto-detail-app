@@ -19,7 +19,15 @@ export type CreateAssessmentInput = {
   notes?: string;
 };
 
-// Create a new assessment document and return its Id
+/**
+ * Creates a new assessment record, associating it with an existing client if one matches the provided organization and client name, or creating a new client if necessary.
+ *
+ * If a client with the given organization ID and normalized name exists, their ID is reused; otherwise, a new client is created with the provided details. The assessment is then created with the specified car, service, and note information, and its status is set to "pending".
+ *
+ * @param args - The input data for the assessment, including client, car, and service details
+ * @returns The ID of the newly created assessment
+ * @throws If the user is not authenticated
+ */
 export async function createAssessmentModel(
   ctx: MutationCtx,
   args: CreateAssessmentInput,

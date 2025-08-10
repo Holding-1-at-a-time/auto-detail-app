@@ -21,6 +21,14 @@ function GetToken(): { orgId: string | null } {
 
 export { GetToken };
 
+/**
+ * Renders the main application layout for authenticated users within an organization.
+ *
+ * Redirects users who are not part of any organization to the organization creation page. Displays a header, sidebar navigation with organization-specific links, an organization switcher, and the main content area.
+ *
+ * @param children - The content to display within the main area of the layout
+ * @param params - Contains the current organization's ID used for navigation links
+ */
 export default function AppLayout({
     children,
     params,

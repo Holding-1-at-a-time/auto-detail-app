@@ -33,6 +33,11 @@ interface ComboboxProps {
   emptyPlaceholder?: string;
 }
 
+/**
+ * Renders a searchable dropdown combobox for selecting an option from a list.
+ *
+ * Displays the currently selected option or a placeholder, and allows users to filter and select options via a popover. Calls the provided `onChange` callback when the selection changes. Supports customizable placeholders for the main button, search input, and empty state.
+ */
 export function Combobox({
   options,
   value,

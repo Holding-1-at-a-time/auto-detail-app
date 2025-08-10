@@ -66,11 +66,9 @@ const serviceOptions = [
 ];
 
 /**
- * Page for creating a new vehicle assessment.
+ * Renders a page for creating a new vehicle assessment, including client lookup, vehicle details, service selection, and notes.
  *
- * This page displays a form with input fields for client name, car make, car model, car year, services requested, and additional notes.
- * When the form is submitted, the page will call the `createAssessment` mutation to create a new assessment document in the database.
- * If the mutation is successful, the page will redirect to a dashboard page.
+ * Allows searching for existing clients or entering new client information, autofilling contact fields when a client is selected. On submission, creates a new assessment associated with the current organization and user, then redirects to the organization's dashboard.
  */
 export default function NewAssessmentPage() {
   const createAssessment = useMutation(api.assessments.createAssessment);
@@ -120,6 +118,13 @@ export default function NewAssessmentPage() {
     setSearchClientName("");
   };
 
+  /**
+   * Handles form submission for creating a new vehicle assessment.
+   *
+   * Submits the assessment data, including client and vehicle information, to the backend. Resets the form and navigates to the organization's dashboard upon successful creation. If the organization or user ID is missing, the submission is aborted.
+   *
+   * @param values - The validated form data containing client, vehicle, service, and notes information
+   */
   async function onSubmit(values: FormValues) {
     if (!organization?.id || !userId) {
       console.error("No organization or user ID found");
