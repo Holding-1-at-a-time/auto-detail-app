@@ -6,7 +6,7 @@ import type { Id } from './_generated/dataModel';
 // Mutation to create a new service
 export const createService = mutation({
     args: {
-        orgId: v.id('organizations'),
+        orgId: v.id("organizations"),
         name: v.string(),
         price: v.number(),
         userId: v.id("users"),
@@ -14,7 +14,14 @@ export const createService = mutation({
         carMake: v.string(),
         carModel: v.string(),
         carYear: v.number(),
+        carColor: v.string(),
         notes: v.optional(v.string()),
+        status: v.union(
+          v.literal("pending"),
+          v.literal("reviewed"),
+          v.literal("complete"),
+          v.literal("cancelled"),
+        ),
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
@@ -26,13 +33,14 @@ export const createService = mutation({
             name: args.name,
             price: args.price,
             orgId: args.orgId,
+            clientName: args.clientName, // Add clientName field
             userId: args.userId,
-            clientName: args.clientName,
             carMake: args.carMake,
             carModel: args.carModel,
             carYear: args.carYear,
-            notes: args.notes,
+            notes: args.notes ?? undefined, // Use undefined to match schema type
             status: "pending",
+            carColor: args.carColor
         });
     },
 });
@@ -68,7 +76,7 @@ export const getAllServices = query({
             .query("services")
             .withIndex("by_orgId", (q) => q.eq("orgId", identity.orgId as Id<"organizations">))
             .collect();
-    }
+    },
 });
 
 export const getServicesForCurrentOrg = query({

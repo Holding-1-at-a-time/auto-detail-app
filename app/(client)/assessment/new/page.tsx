@@ -81,7 +81,7 @@ export default function NewAssessmentPage() {
         await createAssessment({
             ...values,
             orgId,
-            userId: Id<'users>',
+            userId: Id < 'users>',
         });
         form.reset();
         // Redirect to a dashboard page after successful submission

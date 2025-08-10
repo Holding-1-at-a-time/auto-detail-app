@@ -32,25 +32,54 @@ export default function PublicBookingPage({
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-    const serviceIds = formData.getAll("serviceIds") as Id<"services">[];
+    const serviceIds = formData
+      .getAll("serviceIds")
+      .map((id) => {
+        // Ensure id is a string and matches expected format (add your own validation if needed)
+        if (typeof id === "string" && id.trim() !== "") {
+          return id as Id<"services">;
+        }
+        return null;
+      })
+      .filter((id): id is Id<"services"> => id !== null);
 
     if (!user) {
       console.error("User is not authenticated");
       return;
     }
 
+    const carYearRaw = formData.get("carYear");
+    const carYear = parseInt(typeof carYearRaw === "string" ? carYearRaw.trim() : "", 10);
+
+    // Validate carYear: must be an integer and a reasonable year (e.g., between 1900 and next year)
+    const currentYear = new Date().getFullYear();
+    if (
+      !carYearRaw ||
+      isNaN(carYear) ||
+      !Number.isInteger(carYear) ||
+      String(carYear) !== (typeof carYearRaw === "string" ? carYearRaw.trim() : "") ||
+      carYear < 1900 ||
+      carYear > currentYear + 1
+    ) {
+      alert("Please enter a valid car year (must be a whole number between 1900 and next year).");
+      return;
+    }
+
     createAssessment({
-      orgId: orgData.orgId,
+      orgId: orgData.orgId as Id<"organizations">,
       clientName: formData.get("clientName") as string,
       carMake: formData.get("carMake") as string,
       carModel: formData.get("carModel") as string,
-      carYear: Number(formData.get("carYear")),
+      carYear: carYear,
       serviceIds: serviceIds,
       notes: formData.get("notes") as string,
       userId: user.id as Id<"users">
     }).then(() => {
       alert("Assessment submitted successfully!");
       event.currentTarget.reset();
+    }).catch((error) => {
+      console.error("Failed to submit assessment:", error);
+      alert("Failed to submit assessment. Please try again or contact support.");
     });
   };
 

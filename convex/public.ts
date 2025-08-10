@@ -6,22 +6,10 @@ import { v } from "convex/values";
 // PUBLIC QUERY: Get an organization and its services by name or ID
 export const getOrgAndServices = query({
   args: {
-    orgName: v.string(),
     orgId: v.id("organizations"),
-    serviceIds: v.array(v.id("services")),
-    price: v.number(),
   },
-  handler: async (args: {
-    orgName: string;
-    orgId: Id<"organizations">;
-    serviceIds: Id<"services">[];
-    price: number;
-  }, ctx: QueryCtx) => {
-    const { orgId } = args;
-    const org = await ctx.db
-      .query("organizations")
-      .filter((q) => q.eq(q.field("orgId"), orgId))
-      .first();
+  handler: async (ctx, args) => {
+    const org = await ctx.db.get(args.orgId);
 
     if (!org) {
       return null;
@@ -29,7 +17,7 @@ export const getOrgAndServices = query({
 
     const services = await ctx.db
       .query("services")
-      .withIndex("by_orgId", "orgId", orgId)
+      .withIndex("by_orgId", (q) => q.eq("orgId", org._id))
       .collect();
 
     return {
@@ -44,11 +32,11 @@ export const getOrgForBooking = query({
   args: {
     slug: v.string(),
   },
-  handler: async (ctx: QueryCtx, args: { slug: string }) => {
+  handler: async (ctx, args) => {
     // Find the organization by its unique slug
     const org = await ctx.db
       .query("organizations")
-      .withIndex((q) => q.eq(q.field("orgSlug"), args.slug))
+      .filter((q) => q.eq(q.field("orgSlug"), args.slug))
       .first();
 
     if (!org) {
@@ -58,7 +46,7 @@ export const getOrgForBooking = query({
     // Find the services offered by this organization
     const services = await ctx.db
       .query("services")
-      .withIndex("by_orgId", "orgId", org._id as Id<"organizations">)
+      .withIndex("by_orgId", (q) => q.eq("orgId", org._id))
       .collect();
 
     return {
@@ -82,16 +70,7 @@ export const publicCreateAssessment = mutation({
     serviceIds: v.array(v.id("services")),
     notes: v.optional(v.string()),
   },
-  handler: async (ctx: MutationCtx, args: {
-    userId: Id<"users">;
-    orgId: Id<"organizations">;
-    clientName: string;
-    carMake: string;
-    carModel: string;
-    carYear: number;
-    serviceIds: Id<"services">[];
-    notes?: string;
-  }) => {
+  handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (identity === null) {
       throw new Error("Not authenticated");

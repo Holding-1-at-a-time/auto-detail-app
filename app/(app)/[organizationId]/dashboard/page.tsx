@@ -1,11 +1,11 @@
 // app/(app)/[organizationId]/dashboard/page.tsx
 "use client";
 
-import { useMutation, useQuery } from "convex/react";
+import { useQuery } from "convex/react";
 import { useOrganization } from "@clerk/nextjs";
 import { api } from "@/convex/_generated/api";
-import { Doc, Id } from "@/convex/_generated/dataModel";
-import { Card } from "@/components/ui/card";
+import { Id } from "@/convex/_generated/dataModel";
+import { useRouter } from "next/navigation";
 
 import {
   Table,
@@ -15,116 +15,26 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { MoreHorizontal } from "lucide-react";
-import { useState } from "react";
-
-// Sub-component for the action menu to keep the main component clean
-function AssessmentActions({ assessment }: { assessment: Doc<"assessments"> }) {
-  const deleteAssessment = useMutation(api.assessments.deleteAssessment);
-  const updateAssessmentStatus = useMutation(
-    api.assessments.updateAssessmentStatus
-  );
-  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-
-  const allStatuses = ["pending", "reviewed", "complete", "cancelled"] as const;
-  const newStatuses = allStatuses.filter((status) => status !== assessment.status);
-
-  return (
-    <>
-      {/* Alert Dialog for delete confirmation */}
-      <AlertDialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the
-              assessment for {assessment.clientName}.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() =>
-                deleteAssessment({ assessmentId: assessment._id })
-              }
-            >
-              Confirm Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Dropdown Menu for actions */}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="h-8 w-8 p-0">
-            <span className="sr-only">Open menu</span>
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuSub>
-            <DropdownMenuSubTrigger>Change Status</DropdownMenuSubTrigger>
-            <DropdownMenuSubContent>
-              {newStatuses.map((status) => (
-                <DropdownMenuItem
-                  key={status}
-                  onClick={() =>
-                    updateAssessmentStatus({
-                      assessmentId: assessment._id,
-                      status: status as "pending" | "reviewed" | "complete",
-                    })
-                  }
-                  className="capitalize"
-                >
-                  {status}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuSubContent>
-          </DropdownMenuSub>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem
-            className="text-red-500"
-            onClick={() => setIsConfirmOpen(true)}
-          >
-            Delete
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </>
-  );
-}
+import AssessmentActions from "./AssessmentActions";
+import { ASSESSMENT_TABLE_HEADERS } from "./constants";
+import { useCallback } from "react";
 
 // Main Dashboard Page Component
 export default function DashboardPage() {
   const { organization } = useOrganization();
+  const router = useRouter();
   const assessments = useQuery(
     api.assessments.getByOrg,
     organization?.id ? { orgId: organization.id as Id<"organizations"> } : "skip"
+  );
+
+  const handleRowClick = useCallback(
+    (assessmentId: Id<"assessments">) => {
+      router.push(`/assessment/${assessmentId}`);
+    },
+    [router]
   );
 
   return (
@@ -140,50 +50,54 @@ export default function DashboardPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[250px]">Client</TableHead>
-              <TableHead>Vehicle</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              {ASSESSMENT_TABLE_HEADERS.map(({ label, className }) => (
+                <TableHead key={label} className={className}>
+                  {label}
+                </TableHead>
+              ))}
             </TableRow>
           </TableHeader>
           <TableBody>
-            {assessments?.map((assessment) => (
-              <TableRow
-                key={assessment._id}
-                onClick={() => handleRowClick(assessment._id)}
-                className="cursor-pointer hover:bg-muted/50"
-              >
-                <TableCell className="font-medium">
-                  {assessment.clientName}
-                </TableCell>
-                <TableCell>
-                  {assessment.carYear} {assessment.carMake} {assessment.carModel}
-                </TableCell>
-                <TableCell>
-                  <Badge className="capitalize">{assessment.status}</Badge>
-                </TableCell>
-                <TableCell>
-                  {new Date(assessment._creationTime).toLocaleDateString()}
-                </TableCell>
-                <TableCell
-                  className="text-right"
-                  onClick={(e) => e.stopPropagation()} // prevent row navigation when clicking actions
+            {assessments?.map((assessment) => {
+              const {
+                _id,
+                clientName,
+                carYear,
+                carMake,
+                carModel,
+                status,
+                _creationTime,
+              } = assessment;
+              return (
+                <TableRow
+                  key={_id}
+                  onClick={() => handleRowClick(_id)}
+                  className="cursor-pointer hover:bg-muted/50"
                 >
-                  <AssessmentActions assessment={assessment} />
-                </TableCell>
-              </TableRow>
-            ))}
+                  <TableCell className="font-medium">{clientName}</TableCell>
+                  <TableCell>
+                    {carYear} {carMake} {carModel}
+                  </TableCell>
+                  <TableCell>
+                    <Badge className="capitalize">{status}</Badge>
+                  </TableCell>
+                  <TableCell>
+                    {new Date(_creationTime).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell
+                    className="text-right"
+                    onClick={(e) => e.stopPropagation()} // prevent row navigation when clicking actions
+                  >
+                    <AssessmentActions assessment={assessment} />
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </Card>
 
-      {/* Load More button */}
-      <div className="mt-4 flex justify-center">
-        {status === "CanLoadMore" && (
-          <Button onClick={() => loadMore(10)}>Load More</Button>
-        )}
-      </div>
+      {/* Removed broken Load More button (status/loadMore undefined) */}
     </div>
   );
 }

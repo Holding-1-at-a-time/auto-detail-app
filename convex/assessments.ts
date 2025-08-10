@@ -118,17 +118,13 @@ export const getByOrg = query({
     orgId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
-    // Get the user's identity, which includes their active orgId
     const identity = await ctx.auth.getUserIdentity();
-
-    // If the user is not authenticated, return nothing
-    if (!identity) {
+    if (!identity || !identity.orgId) {
       return [];
     }
 
     // Verify user has access to the requested organization
-    const userMemberships = await ctx.auth.getUserOrgMemberships();
-    if (!userMemberships || !userMemberships[args.orgId]) {
+    if (identity.orgId !== args.orgId) {
       return [];
     }
 

@@ -8,14 +8,29 @@ import { v } from "convex/values";
  */
 export const createUser = mutation({
   args: {
-    clerkId: v.string(),
-    orgId: v.string(),
+    clerkId: v.id('users'),
+    orgId: v.id('organizations'),
   },
   handler: async (ctx, args) => {
     await ctx.db.insert("users", {
       clerkId: args.clerkId,
       orgId: args.orgId,
+      givenName: "",
+      familyName: "",
+      userName: "",
+      email: "",
+      phone: "",
+      address: "",
+      city: "",
+      state: "",
+      zip: "",
+      imageUrl: ""
     });
+
+    return await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
+      .unique();
   },
 });
 
@@ -29,11 +44,9 @@ export const getCurrentUser = query({
       return null;
     }
 
-    const user = await ctx.db
+    return await ctx.db
       .query("users")
-      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
       .unique();
-
-    return user;
   },
 });
