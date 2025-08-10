@@ -23,6 +23,11 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
+/**
+ * Displays a list of clients associated with the current organization.
+ *
+ * Fetches and renders all clients for the active organization, showing their name, email, and phone number in a table. Provides a link to each client's detail page. If no clients exist, displays a message indicating that new clients will appear after creating an assessment.
+ */
 export default function ClientsPage() {
   const { organization } = useOrganization();
   const clients = useQuery(

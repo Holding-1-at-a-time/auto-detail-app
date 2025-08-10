@@ -67,8 +67,9 @@ const serviceOptions = [
 ] as const;
 
 /**
- * Page for creating a new vehicle assessment.
+ * Renders a form page for creating a new vehicle assessment, allowing users to search for or enter client information, specify vehicle details, select requested services, and add notes.
  *
+
  * This page displays a form with input fields for client name, car make, car model, car year, services requested, and additional notes.
  * When the form is submitted, the page will call the `createAssessment` mutation to create a new assessment document in the database.
  * On success, the form resets and navigation proceeds to the organization dashboard.
@@ -94,6 +95,36 @@ export default function NewAssessmentPage() {
     },
   });
 
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchClientName(searchClientName);
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [searchClientName]);
+
+  const searchResults = useQuery(
+    api.clients.searchByName,
+    debouncedSearchClientName && organization?.id
+      ? { name: debouncedSearchClientName, orgId: organization.id as Id<"organizations"> }
+      : "skip"
+  );
+
+  const handleClientSelect = (client: { _id: Id<"clients">, name: string, email?: string | null, phone?: string | null }) => {
+    form.setValue("clientName", client.name);
+    form.setValue("clientEmail", client.email ?? "");
+    form.setValue("clientPhone", client.phone ?? "");
+    setSelectedClientId(client._id);
+    setClientSelectorOpen(false);
+    setSearchClientName("");
+  };
+
+  /**
+   * Submits the new assessment form data to create a vehicle assessment for the current organization and user.
+   *
+   * If the organization or user ID is missing, the submission is aborted.
+   *
+   * @param values - The validated form values containing client information, vehicle details, selected services, and notes
+   */
   async function onSubmit(values: FormValues) {
     if (!organization?.id || !userId) {
       toast.error("Organization and user must be identified to create an assessment.");
