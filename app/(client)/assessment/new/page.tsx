@@ -207,32 +207,6 @@ export default function NewAssessmentPage() {
     </Card>
   );
 }
-=======
-    const router = useRouter();
-    const createAssessment = useMutation(api.assessments.createAssessment);
-    // Fetch organization and current user documents to obtain Convex Ids
-    const organization = useQuery(api.organizations.getOrganization);
-    const currentUser = useQuery(api.users.getCurrentUser);
-    const form = useForm<FormValues>({
-        resolver: zodResolver<FormValues>(formSchema),
-        defaultValues: {
-            // Set default values
-            orgId: organization?._id ?? "",
-            serviceId: "",
-            userId: currentUser?._id ?? "",
-            clientName: "",
-            carMake: "",
-            carModel: "",
-            carYear: new Date().getFullYear(),
-            carColor: "",
-            services: [],
-            notes: "",
-        },
-    });
-
-    
-    // Add error state for feedback
-    const [submitError, setSubmitError] = React.useState<string | null>(null);
 
     const onSubmit: SubmitHandler<FormValues> = async (values) => {
         setSubmitError(null);
