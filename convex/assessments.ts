@@ -13,7 +13,11 @@ export const createAssessment = mutation({
   args: {
     orgId: v.id("organizations"), // The Clerk Organization ID
     userId: v.id("users"), // The Clerk User ID
-    clientName: v.string(),
+    client: v.object({
+      name: v.string(),
+      email: v.optional(v.string()),
+      phone: v.optional(v.string()),
+    }),
     carMake: v.string(),
     carModel: v.string(),
     carYear: v.number(),
@@ -125,5 +129,33 @@ export const getAssessmentById = query({
     }
 
     return ctx.db.get(args.assessmentId);
+  },
+});
+
+// Get all assessments for a specific client
+export const getAssessmentsByClientId = query({
+  args: {
+    clientId: v.id("clients"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return [];
+    }
+
+    const client = await ctx.db.get(args.clientId);
+    if (!client) {
+        return [];
+    }
+
+    if (client.orgId !== identity.orgId) {
+        return [];
+    }
+
+    return ctx.db
+      .query("assessments")
+      .withIndex("by_clientId", (q) => q.eq("clientId", args.clientId))
+      .order("desc")
+      .collect();
   },
 });

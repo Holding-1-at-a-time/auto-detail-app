@@ -43,6 +43,9 @@ export default function AppLayout({
                             <Link href={`/${params.organizationId}/dashboard`}>Dashboard</Link>
                         </li>
                         <li>
+                            <Link href={`/${params.organizationId}/clients`}>Clients</Link>
+                        </li>
+                        <li>
                             <Link href={`/${params.organizationId}/settings`}>Settings</Link>
                         </li>
                         {/* Add more links here */}
