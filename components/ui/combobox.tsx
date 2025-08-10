@@ -48,8 +48,9 @@ export function Combobox({
       <PopoverTrigger asChild>
         <Button
           variant="outline"
-          role="combobox"
+          aria-haspopup="listbox"
           aria-expanded={open}
+          aria-controls={open ? "combobox-list" : undefined}
           className="w-full justify-between"
         >
           {value
