@@ -1,12 +1,11 @@
-// app/assessment/new/page.tsx
+// app/(client)/assessment/new/page.tsx
 "use client";
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { Id } from "@convex/types";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -29,39 +28,46 @@ import {
 } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@clerk/clerk-react";
+import React from "react";
 
-// Define the form schema using Zod for validation
+// Form schema with strong validation and correct type coercion
 const formSchema = z.object({
     clientName: z.string().min(2, "Name must be at least 2 characters."),
     carMake: z.string().min(2, "Make is required."),
     carModel: z.string().min(2, "Model is required."),
-    carYear: z.number().min(1900).max(new Date().getFullYear() + 1),
-    services: z.array(z.string()).refine((value) => value.some((item) => item), {
-        message: "You have to select at least one service.",
-    }),
+    carYear: z.coerce
+        .number()
+        .min(1900)
+        .max(new Date().getFullYear() + 1),
+    services: z.array(z.string()).min(1, "You have to select at least one service."),
     notes: z.string().optional(),
 });
+
+type FormValues = z.infer<typeof formSchema>;
 
 const serviceOptions = [
     { id: "interior-detail", label: "Full Interior Detail" },
     { id: "exterior-wash", label: "Exterior Hand Wash & Wax" },
     { id: "paint-correction", label: "Paint Correction" },
     { id: "ceramic-coating", label: "Ceramic Coating" },
-];
+] as const;
 
 /**
  * Page for creating a new vehicle assessment.
  *
  * This page displays a form with input fields for client name, car make, car model, car year, services requested, and additional notes.
  * When the form is submitted, the page will call the `createAssessment` mutation to create a new assessment document in the database.
- * If the mutation is successful, the page will redirect to a dashboard page.
+ * On success, the form resets and navigation proceeds to the organization dashboard.
  */
 export default function NewAssessmentPage() {
-    const createAssessment = useMutation(api.assessments.createAssessment);
     const router = useRouter();
+    const createAssessment = useMutation(api.assessments.createAssessment);
 
-    const form = useForm<z.infer<(typeof formSchema)>>({
+    // Fetch organization and current user documents to obtain Convex Ids
+    const organization = useQuery(api.organizations.getOrganization);
+    const currentUser = useQuery(api.users.getCurrentUser);
+
+    const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
         defaultValues: {
             clientName: "",
@@ -72,41 +78,53 @@ export default function NewAssessmentPage() {
             notes: "",
         },
     });
-    async function onSubmit(values: z.infer<typeof formSchema>) {
-        // You must provide orgId and userId as required by the mutation
-        // Replace the following with your actual logic to get orgId and userId
-        const { data: org } = await api.organizations.getOrganizationForUser();
-        const orgId = org?.id;
 
-        const { userId } = useAuth();
+    
+    // Add error state for feedback
+    const [submitError, setSubmitError] = React.useState<string | null>(null);
 
-        if (!orgId || !userId) {
-            console.error("Failed to get orgId or userId");
+    const onSubmit = async (values: FormValues): Promise<void> => {
+        setSubmitError(null);
+
+        if (!organization?._id || !currentUser?._id) {
+            setSubmitError("Failed to get organization or user id");
             return;
         }
 
-        await createAssessment({
-            ...values,
-            orgId,
-            userId: userId as Id<"users">,
-        });
-        form.reset();
-        // Redirect to a dashboard page after successful submission
-        router.push("/dashboard");
-    }
+        try {
+            await createAssessment({
+                ...values,
+                orgId: organization._id,
+                userId: currentUser._id,
+            });
+
+            form.reset();
+            // Redirect to the organization's dashboard after successful submission
+            router.push(`/${organization._id}/dashboard`);
+        } catch (err: unknown) {
+            const message =
+              err instanceof Error ? err.message : "Failed to create assessment. Please try again.";
+            setSubmitError(message);
+        }
+    };
+
+
+
     return (
         <Card className="max-w-2xl mx-auto">
             <CardHeader>
                 <CardTitle>New Vehicle Assessment</CardTitle>
                 <CardDescription>
-                    Fill out the details below to get started. We'll review it and get
-                    back to you.
+                    Fill out the details below to get started. We'll review it and get back to you.
                 </CardDescription>
             </CardHeader>
             <CardContent>
+                {submitError && (
+                    <div className="text-red-500 mb-4">{submitError}</div>
+                )}
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                        {/* Form fields go here */}
+                        {/* Client Name */}
                         <FormField
                             control={form.control}
                             name="clientName"
@@ -120,51 +138,94 @@ export default function NewAssessmentPage() {
                                 </FormItem>
                             )}
                         />
+
+                        {/* Vehicle Details */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <FormField control={form.control} name="carMake" render={({ field }) => (
-                                <FormItem><FormLabel>Car Make</FormLabel><FormControl><Input placeholder="Toyota" {...field} /></FormControl><FormMessage /></FormItem>
-                            )} />
-                            <FormField control={form.control} name="carModel" render={({ field }) => (
-                                <FormItem><FormLabel>Car Model</FormLabel><FormControl><Input placeholder="Camry" {...field} /></FormControl><FormMessage /></FormItem>
-                            )} />
-                            <FormField control={form.control} name="carYear" render={({ field }) => (
-                                <FormItem><FormLabel>Year</FormLabel><FormControl><Input type="number" placeholder="2024" {...field} /></FormControl><FormMessage /></FormItem>
-                            )} />
+                            <FormField
+                                control={form.control}
+                                name="carMake"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Car Make</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="Toyota" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="carModel"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Car Model</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="Camry" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="carYear"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Year</FormLabel>
+                                        <FormControl>
+                                            <Input type="number" placeholder="2024" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
                         </div>
 
+                        {/* Services */}
                         <FormField
                             control={form.control}
                             name="services"
-                            render={() => (
+                            render={({ field }) => (
                                 <FormItem>
                                     <div className="mb-4">
                                         <FormLabel className="text-base">Services Requested</FormLabel>
                                         <FormDescription>Select all that apply.</FormDescription>
                                     </div>
-                                    {serviceOptions.map((item) => (
-                                        <FormField
-                                            key={item.id}
-                                            control={form.control}
-                                            name="services"
-                                            render={({ field }) => {
-                                                return (
-                                                    <FormItem key={item.id} className="flex flex-row items-start space-x-3 space-y-0">
-                                                        <FormControl>
-                                                            <Checkbox checked={field.value?.includes(item.id)} onCheckedChange={(checked) => {
-                                                                return checked ? field.onChange([...field.value, item.id]) : field.onChange(field.value?.filter((value) => value !== item.id))
-                                                            }} />
-                                                        </FormControl>
-                                                        <FormLabel className="font-normal">{item.label}</FormLabel>
-                                                    </FormItem>
-                                                )
-                                            }} />
-                                    ))}
+                                    {serviceOptions.map((item) => {
+                                        const selected: string[] = Array.isArray(field.value)
+                                            ? (field.value as string[])
+                                            : [];
+                                        return (
+                                            <FormItem
+                                                key={item.id}
+                                                className="flex flex-row items-start space-x-3 space-y-0"
+                                            >
+                                                <FormControl>
+                                                    <Checkbox
+                                                        checked={selected.includes(item.id)}
+                                                        onCheckedChange={(checked) => {
+                                                            const isChecked = checked === true;
+                                                            const next = isChecked
+                                                                ? [...selected, item.id]
+                                                                : selected.filter((v) => v !== item.id);
+                                                            field.onChange(next);
+                                                        }}
+                                                    />
+                                                </FormControl>
+                                                <FormLabel className="font-normal">
+                                                    {item.label}
+                                                </FormLabel>
+                                            </FormItem>
+                                        );
+                                    })}
                                     <FormMessage />
                                 </FormItem>
                             )}
                         />
 
-                        <FormField<{ clientName: string; carMake: string; carModel: string; carYear: number; services: string[]; notes?: string | undefined; }>
+                        {/* Notes */}
+                        <FormField
                             control={form.control}
                             name="notes"
                             render={({ field }) => (
@@ -177,11 +238,14 @@ export default function NewAssessmentPage() {
                                             {...field}
                                         />
                                     </FormControl>
+                                    <FormMessage />
                                 </FormItem>
                             )}
                         />
 
-                        <Button type="submit">Submit for Review</Button>
+                        <Button type="submit" disabled={!organization || !currentUser || form.formState.isSubmitting}>
+                            Submit for Review
+                        </Button>
                     </form>
                 </Form>
             </CardContent>
