@@ -11,6 +11,7 @@ export type CreateAssessmentInput = {
   carMake: string;
   carModel: string;
   carYear: number;
+  carColor: string; // Added missing property
   services: string[]; // Service document IDs as strings; will be normalized
   notes?: string;
 };
@@ -30,16 +31,18 @@ export async function createAssessmentModel(
     .filter((id): id is Id<"services"> => id !== null);
 
   return await ctx.db.insert("assessments", {
-      clientName: args.clientName,
-      carMake: args.carMake,
-      carModel: args.carModel,
-      carYear: args.carYear,
-      serviceIds,
-      notes: args.notes,
-      orgId: args.orgId,
-      userId: args.userId,
-      status: "pending" as AssessmentStatus,
-    });
+    clientName: args.clientName,
+    carMake: args.carMake,
+    carModel: args.carModel,
+    carYear: args.carYear,
+    serviceIds,
+    notes: args.notes,
+    orgId: args.orgId,
+    userId: args.userId,
+    status: "pending" as AssessmentStatus,
+    carColor: args.carColor,
+    serviceId: args.serviceIds[0], // Assuming the first service is the main one
+  });
 }
 
 // Delete an assessment by Id

@@ -1,7 +1,9 @@
+// ...existing code...
+
 // app/(client)/assessment/new/page.tsx
 "use client";
 
-import { useForm } from "react-hook-form";
+import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation, useQuery } from "convex/react";
@@ -32,6 +34,9 @@ import React from "react";
 
 // Form schema with strong validation and correct type coercion
 const formSchema = z.object({
+    orgId: z.string().min(1, "Organization ID is required."),
+    serviceId:  z.string().min(1, "Service ID is required."),
+    userId: z.string().min(1, "User ID is required."),
     clientName: z.string().min(2, "Name must be at least 2 characters."),
     carMake: z.string().min(2, "Make is required."),
     carModel: z.string().min(2, "Model is required."),
@@ -39,9 +44,12 @@ const formSchema = z.object({
         .number()
         .min(1900)
         .max(new Date().getFullYear() + 1),
+    carColor: z.string().min(2, "Color is required."),
     services: z.array(z.string()).min(1, "You have to select at least one service."),
     notes: z.string().optional(),
 });
+
+
 
 type FormValues = z.infer<typeof formSchema>;
 
@@ -62,18 +70,21 @@ const serviceOptions = [
 export default function NewAssessmentPage() {
     const router = useRouter();
     const createAssessment = useMutation(api.assessments.createAssessment);
-
     // Fetch organization and current user documents to obtain Convex Ids
     const organization = useQuery(api.organizations.getOrganization);
     const currentUser = useQuery(api.users.getCurrentUser);
-
     const form = useForm<FormValues>({
-        resolver: zodResolver(formSchema),
+        resolver: zodResolver<FormValues>(formSchema),
         defaultValues: {
+            // Set default values
+            orgId: organization?._id ?? "",
+            serviceId: "",
+            userId: currentUser?._id ?? "",
             clientName: "",
             carMake: "",
             carModel: "",
             carYear: new Date().getFullYear(),
+            carColor: "",
             services: [],
             notes: "",
         },
@@ -83,7 +94,7 @@ export default function NewAssessmentPage() {
     // Add error state for feedback
     const [submitError, setSubmitError] = React.useState<string | null>(null);
 
-    const onSubmit = async (values: FormValues): Promise<void> => {
+    const onSubmit: SubmitHandler<FormValues> = async (values) => {
         setSubmitError(null);
 
         if (!organization?._id || !currentUser?._id) {
@@ -107,7 +118,6 @@ export default function NewAssessmentPage() {
             setSubmitError(message);
         }
     };
-
 
 
     return (
@@ -193,9 +203,7 @@ export default function NewAssessmentPage() {
                                         <FormDescription>Select all that apply.</FormDescription>
                                     </div>
                                     {serviceOptions.map((item) => {
-                                        const selected: string[] = Array.isArray(field.value)
-                                            ? (field.value as string[])
-                                            : [];
+                                        const selected: string[] = field.value ?? [];
                                         return (
                                             <FormItem
                                                 key={item.id}
