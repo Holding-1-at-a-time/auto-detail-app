@@ -1,7 +1,6 @@
 // convex/clients.ts
 import { query } from "./_generated/server";
 import { v } from "convex/values";
-import { Id } from "./_generated/dataModel";
 
 // Query to get all clients for the user's active organization
 export const listByOrg = query({
@@ -63,7 +62,7 @@ export const getClientById = query({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
-      throw new Error("You must be logged in to view a client.");
+      return null;
     }
 
     const client = await ctx.db.get(args.clientId);

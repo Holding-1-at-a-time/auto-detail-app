@@ -27,17 +27,12 @@ export interface ComboboxOption {
 interface ComboboxProps {
   options: ComboboxOption[];
   value?: string;
-  onChange: (value: string | null) => void;
+  onChange: (value: string) => void;
   placeholder?: string;
   searchPlaceholder?: string;
   emptyPlaceholder?: string;
 }
 
-/**
- * Renders a searchable dropdown combobox for selecting an option from a list.
- *
- * Displays the currently selected option or a placeholder, and allows users to filter and select options via a popover. Calls the provided `onChange` callback when the selection changes. Supports customizable placeholders for the main button, search input, and empty state.
- */
 export function Combobox({
   options,
   value,
@@ -52,9 +47,11 @@ export function Combobox({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
+          type="button"
           variant="outline"
-          role="combobox"
+          aria-haspopup="listbox"
           aria-expanded={open}
+          aria-controls={open ? "combobox-list" : undefined}
           className="w-full justify-between"
         >
           {value
@@ -73,12 +70,14 @@ export function Combobox({
                 <CommandItem
                   key={option.value}
                   value={option.value}
+                  aria-selected={value === option.value}
                   onSelect={(currentValue) => {
-                    onChange(currentValue === value ? "" : currentValue)
+                    onChange(currentValue === value ? null : currentValue)
                     setOpen(false)
                   }}
                 >
                   <Check
+                    aria-hidden="true"
                     className={cn(
                       "mr-2 h-4 w-4",
                       value === option.value ? "opacity-100" : "opacity-0"

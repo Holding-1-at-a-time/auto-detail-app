@@ -2,9 +2,7 @@
 "use client";
 
 import { useQuery } from "convex/react";
-import { useOrganization } from "@clerk/nextjs";
 import { api } from "@/convex/_generated/api";
-import { Id } from "@/convex/_generated/dataModel";
 import { useRouter } from "next/navigation";
 
 import {
@@ -23,11 +21,11 @@ import { useCallback } from "react";
 
 // Main Dashboard Page Component
 export default function DashboardPage() {
-  const { organization } = useOrganization();
   const router = useRouter();
+  const orgDoc = useQuery(api.organizations.getOrganization);
   const assessments = useQuery(
     api.assessments.getByOrg,
-    organization?.id ? { orgId: organization.id as Id<"organizations"> } : "skip"
+    orgDoc?._id ? { orgId: orgDoc._id } : "skip"
   );
 
   const handleRowClick = useCallback(

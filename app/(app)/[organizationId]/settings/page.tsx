@@ -3,10 +3,9 @@
 
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { useOrganization, Protect, useUser } from '@clerk/nextjs';
+import { useOrganization, Protect } from '@clerk/nextjs';
 import { QRCodeSVG } from 'qrcode.react';
 import { useRef, useState } from 'react';
-import { Id } from '@/convex/_generated/dataModel';
 import { toast } from "sonner"; // <-- Import toast from Sonner
 
 import { Button } from '@/components/ui/button';
@@ -18,11 +17,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
  * Renders a card for managing business services.
  */
 function ManageServicesCard() {
-    const { organization } = useOrganization();
-    const { user } = useUser();
+    const orgDoc = useQuery(api.organizations.getOrganization);
+    const currentUser = useQuery(api.users.getCurrentUser);
     const services = useQuery(
         api.services.getServicesForCurrentOrg,
-        organization?.id ? { orgId: organization.id as Id<"organizations"> } : "skip"
+        orgDoc?._id ? { orgId: orgDoc._id } : "skip"
     );
     const createService = useMutation(api.services.createService);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -33,8 +32,8 @@ function ManageServicesCard() {
         const formData = new FormData(event.currentTarget);
         const name = formData.get('name') as string;
         const price = Number(formData.get('price'));
-        const orgId = organization?.id;
-        const userId = user?.id;
+        const orgId = orgDoc?._id;
+        const userId = currentUser?._id;
 
         if (!orgId || !userId) {
             toast.error("Organization or user ID is missing.");
@@ -50,10 +49,10 @@ function ManageServicesCard() {
 
         try {
             await createService({
-                orgId: orgId as Id<"organizations">,
+                orgId: orgId,
                 name,
                 price,
-                userId: userId as Id<"users">,
+                userId: userId,
                 clientName,
                 carMake,
                 carModel,

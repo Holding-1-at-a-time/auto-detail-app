@@ -23,11 +23,6 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
-/**
- * Displays a list of clients associated with the current organization, allowing users to view client details.
- *
- * Shows a loading message while client data is being fetched. If no clients are found, displays a message indicating that new clients will appear after creating an assessment.
- */
 export default function ClientsPage() {
   const { organization } = useOrganization();
   const clients = useQuery(
