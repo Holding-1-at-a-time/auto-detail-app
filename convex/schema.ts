@@ -13,7 +13,6 @@
 // convex/schema.ts
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
-import { no } from "zod/locales";
 
 export default defineSchema({
   // NEW: Table to store business-specific services
@@ -44,9 +43,12 @@ export default defineSchema({
     orgId: v.id('organizations'), // The Clerk Organization ID
     userId: v.id("users"), // The Clerk User ID
     clientId: v.id("clients"),
+    serviceId: v.id("services"), // The Service ID
+    clientName: v.string(),
     carMake: v.string(),
     carModel: v.string(),
     carYear: v.number(),
+    carColor: v.string(),
     serviceIds: v.array(v.id("services")), // Link to the services table
     notes: v.optional(v.string()),
     status: v.union(
@@ -150,6 +152,7 @@ export default defineSchema({
   }).index("by_orgId", ["orgId"])
     .index("by_name", ["name"])
     .index("by_orgId_and_name", ["orgId", "name"])
+    .index("by_orgId_and_email", ["orgId", "email"])
     .searchIndex("search_name", {
       searchField: "name",
       filterFields: ["orgId"],

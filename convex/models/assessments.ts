@@ -15,7 +15,9 @@ export type CreateAssessmentInput = {
   carMake: string;
   carModel: string;
   carYear: number;
-  services: string[];
+
+  carColor: string; // Added missing property
+  services: string[]; // Service document IDs as strings; will be normalized
   notes?: string;
 };
 
@@ -39,16 +41,34 @@ export async function createAssessmentModel(
 
   let clientId: Id<"clients">;
 
-  const existingClient = await ctx.db
-    .query("clients")
-    .withIndex("by_orgId_and_name", (q) =>
-      q.eq("orgId", args.orgId).eq("name", args.client.name)
-    )
-    .first();
+  // Prioritize finding client by email if provided, as it's more likely to be unique
+  if (args.client.email) {
+    const clientByEmail = await ctx.db
+      .query("clients")
+      .withIndex("by_orgId_and_email", (q) =>
+        q.eq("orgId", args.orgId).eq("email", args.client.email)
+      )
+      .first();
+    if (clientByEmail) {
+      clientId = clientByEmail._id;
+    }
+  }
 
-  if (existingClient) {
-    clientId = existingClient._id;
-  } else {
+  // If client not found by email, try finding by name
+  if (!clientId) {
+      const clientByName = await ctx.db
+        .query("clients")
+        .withIndex("by_orgId_and_name", (q) =>
+          q.eq("orgId", args.orgId).eq("name", args.client.name)
+        )
+        .first();
+      if (clientByName) {
+          clientId = clientByName._id;
+      }
+  }
+
+  // If client is still not found, create a new one
+  if (!clientId) {
     clientId = await ctx.db.insert("clients", {
       orgId: args.orgId,
       userId: args.userId,
@@ -63,16 +83,18 @@ export async function createAssessmentModel(
     .filter((id): id is Id<"services"> => id !== null);
 
   return await ctx.db.insert("assessments", {
-      clientId,
-      carMake: args.carMake,
-      carModel: args.carModel,
-      carYear: args.carYear,
-      serviceIds,
-      notes: args.notes,
-      orgId: args.orgId,
-      userId: args.userId,
-      status: "pending" as AssessmentStatus,
-    });
+    clientId: clientId,
+    carMake: args.carMake,
+    carModel: args.carModel,
+    carYear: args.carYear,
+    serviceIds,
+    notes: args.notes,
+    orgId: args.orgId,
+    userId: args.userId,
+    status: "pending" as AssessmentStatus,
+    carColor: args.carColor,
+    serviceId: args.serviceIds[0], // Assuming the first service is the main one
+  });
 }
 
 // Delete an assessment by Id

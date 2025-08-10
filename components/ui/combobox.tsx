@@ -60,9 +60,11 @@ export function Combobox({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
+          type="button"
           variant="outline"
-          role="combobox"
+          aria-haspopup="listbox"
           aria-expanded={open}
+          aria-controls={open ? "combobox-list" : undefined}
           className="w-full justify-between"
         >
           {value
@@ -81,12 +83,14 @@ export function Combobox({
                 <CommandItem
                   key={option.value}
                   value={option.value}
+                  aria-selected={value === option.value}
                   onSelect={(currentValue) => {
-                    onChange(currentValue === value ? "" : currentValue)
+                    onChange(currentValue === value ? null : currentValue)
                     setOpen(false)
                   }}
                 >
                   <Check
+                    aria-hidden="true"
                     className={cn(
                       "mr-2 h-4 w-4",
                       value === option.value ? "opacity-100" : "opacity-0"

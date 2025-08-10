@@ -100,12 +100,12 @@ export const getByOrg = query({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity || !identity.orgId) {
-      return [];
+      throw new Error("Not authenticated.");
     }
 
     // Verify user has access to the requested organization
     if (identity.orgId !== args.orgId) {
-      return [];
+      throw new Error("Not authorized for this client.");
     }
 
     // Fetch all assessments that match the user's orgId and order by creation time
