@@ -33,7 +33,6 @@ export const createService = mutation({
             name: args.name,
             price: args.price,
             orgId: args.orgId,
-            clientName: args.clientName, // Add clientName field
             userId: args.userId,
             carMake: args.carMake,
             carModel: args.carModel,

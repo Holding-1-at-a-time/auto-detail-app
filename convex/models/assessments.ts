@@ -16,7 +16,7 @@ export type CreateAssessmentInput = {
   carModel: string;
   carYear: number;
 
-  carColor: string; // Added missing property
+  carColor?: string; // Optional; defaults to "Unknown" if not provided
   services: string[]; // Service document IDs as strings; will be normalized
   notes?: string;
 };
@@ -115,7 +115,7 @@ export async function createAssessmentModel(
     orgId: args.orgId,
     userId: args.userId,
     status: "pending" as AssessmentStatus,
-    carColor: args.carColor,
+    carColor: args.carColor ?? "Unknown",
     serviceId: serviceIds[0],
     clientName: args.client.name
   });

@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useQuery } from "convex/react";
 import { useOrganization } from "@clerk/nextjs";
 import { UseFormReturn } from "react-hook-form";
-import { z } from "zod";
+import { FormValues } from "./page";
 import { Check } from "lucide-react";
 
 import { api } from "@/convex/_generated/api";
@@ -29,17 +29,6 @@ import {
 } from "@/components/ui/command";
 
 // Re-defining the schema part needed for the form values type
-const formSchema = z.object({
-  clientName: z.string().min(2, "Name must be at least 2 characters."),
-  clientEmail: z.string().email("Invalid email address.").optional().or(z.literal('')),
-  clientPhone: z.string().optional(),
-  carMake: z.string(), // Other fields are not needed here, just for type consistency
-  carModel: z.string(),
-  carYear: z.number(),
-  services: z.array(z.string()),
-  notes: z.string().optional(),
-});
-type FormValues = z.infer<typeof formSchema>;
 
 interface ClientSelectorProps {
   form: UseFormReturn<FormValues>;

@@ -10,7 +10,7 @@ export default clerkMiddleware(async (auth: ClerkMiddlewareAuth, req: NextReques
   if (isProtectedRoute(req)) {
     const session = await auth();
     if (!session.userId) {
-      return session.protect();
+      return NextResponse.redirect(new URL("/sign-in", req.url));
     }
   }
   return NextResponse.next();

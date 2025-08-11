@@ -94,18 +94,35 @@ export const publicCreateAssessment = mutation({
     if (!args.carYear) {
       throw new Error("Missing carYear");
     }
-    if (!args.carColor) {
-      throw new Error("Missing carColor");
-    }
     if (!args.serviceIds) {
       throw new Error("Missing serviceIds");
     }
     try {
+      // Find an existing client by org and name. Public flow requires an existing client.
+      const client = await ctx.db
+        .query("clients")
+        .withIndex("by_orgId_and_name", (q) =>
+          q.eq("orgId", args.orgId).eq("name", args.clientName)
+        )
+        .first();
+
+      if (!client) {
+        throw new Error("Client not found for this organization");
+      }
+
       return await ctx.db.insert("assessments", {
-        ...args,
+        orgId: args.orgId,
+        userId: args.userId,
+        clientId: client._id,
+        clientName: args.clientName,
+        carMake: args.carMake,
+        carModel: args.carModel,
+        carYear: args.carYear,
+        carColor: args.carColor ?? "Unknown",
+        serviceIds: args.serviceIds,
+        serviceId: args.serviceIds[0], // Use the first service as the primary one
+        notes: args.notes,
         status: "pending",
-        carColor: args.carColor,
-        serviceId: args.serviceIds[0], // Assuming the first service is the main one
       });
     } catch (e) {
       console.error("Error creating assessment:", e);

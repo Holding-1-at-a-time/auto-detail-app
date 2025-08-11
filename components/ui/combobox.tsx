@@ -27,7 +27,7 @@ export interface ComboboxOption {
 interface ComboboxProps {
   options: ComboboxOption[];
   value?: string;
-  onChange: (value: string) => void;
+  onChange: (value: string | null) => void;
   placeholder?: string;
   searchPlaceholder?: string;
   emptyPlaceholder?: string;
@@ -71,8 +71,8 @@ export function Combobox({
                   key={option.value}
                   value={option.value}
                   aria-selected={value === option.value}
-                  onSelect={(currentValue) => {
-                    onChange(currentValue === value ? null : currentValue)
+                  onSelect={(currentValue: string | undefined) => {
+                    onChange(currentValue === value ? null : currentValue ?? null)
                     setOpen(false)
                   }}
                 >
