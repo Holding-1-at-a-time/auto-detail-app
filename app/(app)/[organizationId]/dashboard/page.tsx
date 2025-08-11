@@ -19,16 +19,22 @@ import { Card } from "@/components/ui/card";
 import AssessmentActions from "./AssessmentActions";
 import { ASSESSMENT_TABLE_HEADERS } from "./constants";
 import { useCallback } from "react";
+import { Id } from "@/convex/_generated/dataModel";
 
 // Main Dashboard Page Component
 export default function DashboardPage() {
   const router = useRouter();
-  // Typed destructure for useParams
+  // Extract organizationId from route params and use for org/user scoping
   const { organizationId } = useParams<{ organizationId: string }>();
+  // organizationId is used below in the orgDoc query; ensure it is present before making requests
 
-  // TODO: If you want to fetch by explicit orgId, use getOrganizationForUser and provide userId/orgId
-  // getOrganization uses the authenticated user's orgId and takes no arguments
-  const orgDoc = useQuery(api.organizations.getOrganization);
+  const userId = useQuery(api.users.getCurrentUser)?._id;
+  
+  const orgDoc = useQuery(
+    api.organizations.getOrganizationForUser,
+    userId && organizationId ? { userId, orgId: organizationId } : "skip"
+  );
+
   const assessments = useQuery(
     api.assessments.getByOrg,
     orgDoc?._id ? { orgId: orgDoc._id } : "skip"

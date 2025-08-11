@@ -146,10 +146,24 @@ export default defineSchema({
   clients: defineTable({
     orgId: v.id("organizations"),
     userId: v.id("users"),
+    assessmentId: v.id("assessments"),
     name: v.string(),
     email: v.optional(v.string()),
     phone: v.optional(v.string()),
-  }).index("by_orgId", ["orgId"])
+    address: (v.object(
+      {
+        street: v.string(),
+        city: v.string(),
+        state: v.string(),
+        zip: v.string(),
+      }
+    )),
+    carId: v.id("cars"),
+  })
+    .index("by_orgId_name_and_phone", ["orgId", "name", "phone"])
+    .index("by_assessmentId", ["assessmentId"])
+    .index("by_carId", ["carId"])
+    .index("by_orgId", ["orgId"])
     .index("by_name", ["name"])
     .index("by_orgId_and_name", ["orgId", "name"])
     .index("by_orgId_and_email", ["orgId", "email"])

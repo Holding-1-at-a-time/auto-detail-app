@@ -19,7 +19,7 @@ Primary domain concerns:
   - book/[organizationSlug]/: Public booking pages
   - layout.tsx: App-wide layout(s)
 - components/: Reusable UI and navigation components (shadcn/ui style)
-  - convex/: Convex backend (public queries/mutations/actions — file-based routing; these files become public API routes)
+- convex/: Convex backend (public file-based query/mutation/action route files)
   - convex/models/: internal helpers only (not route handlers; do not export queries/mutations/actions from here)
 - lib/, utils/, types/: Shared helpers, types, and role definitions
 - .env.local: Environment configuration for Clerk/Convex
@@ -33,7 +33,13 @@ Entrypoints:
 Configuration:
   - Environment variables:
     - Only publishable keys (e.g., variables prefixed with NEXT_PUBLIC_) may be exposed to the client/browser.
-    - Server secrets (API keys, admin tokens, etc.) must never use the NEXT_PUBLIC_ prefix and must only be accessed on the server (API routes, getServerSideProps, or server-side functions).
+    - Server secrets (API keys, admin tokens, etc.) must never use the NEXT_PUBLIC_ prefix and must only be accessed on the server. In the App Router, use server-only patterns such as:
+      - Server components
+      - "use server" functions
+      - Server-only modules
+      - API/route handlers (app/api/*)
+      - Server actions
+    - Never expose server secrets to client bundles.
     - Example:
       - Store Clerk publishable key as NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY in .env.local (safe for client use).
       - Store Clerk secret key or admin API keys as CLERK_SECRET_KEY or ADMIN_USER_ID (never exposed to client, only used server-side).

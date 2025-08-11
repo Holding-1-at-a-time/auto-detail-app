@@ -31,14 +31,14 @@ export async function createAssessmentModel(
     throw new Error("You must be logged in to create an assessment.");
   }
 
-  let clientId: Id<"clients">;
+  let clientId: Id<"clients"> | null = null;
 
-  // Prioritize finding client by email if provided, as it's more likely to be unique
+  // 1) Try by email (more likely to be unique)
   if (args.client.email) {
     const clientByEmail = await ctx.db
       .query("clients")
       .withIndex("by_orgId_and_email", (q) =>
-        q.eq("orgId", args.orgId).eq("email", args.client.email)
+        q.eq("orgId", args.orgId).eq("email", args.client.email!)
       )
       .first();
     if (clientByEmail) {
@@ -46,33 +46,64 @@ export async function createAssessmentModel(
     }
   }
 
-  // If client not found by email, try finding by name
-  if (!clientId) {
-      const clientByName = await ctx.db
-        .query("clients")
-        .withIndex("by_orgId_and_name", (q) =>
-          q.eq("orgId", args.orgId).eq("name", args.client.name)
-        )
-        .first();
-      if (clientByName) {
-          clientId = clientByName._id;
-      }
+  // 2) Try by name AND phone (to reduce false positives)
+  if (!clientId && args.client.name && args.client.phone) {
+    const clientByNameAndPhone = await ctx.db
+      .query("clients")
+      .withIndex("by_orgId_name_and_phone", (q) =>
+        q
+          .eq("orgId", args.orgId)
+          .eq("name", args.client.name)
+          .eq("phone", args.client.phone!)
+      )
+      .first();
+    if (clientByNameAndPhone) {
+      clientId = clientByNameAndPhone._id;
+    }
   }
 
-  // If client is still not found, create a new one
+  // 3) Fallback: try by name
   if (!clientId) {
-    clientId = await ctx.db.insert("clients", {
-      orgId: args.orgId,
-      userId: args.userId,
-      name: args.client.name,
-      email: args.client.email,
-      phone: args.client.phone,
-    });
+    const clientByName = await ctx.db
+      .query("clients")
+      .withIndex("by_orgId_and_name", (q) =>
+        q.eq("orgId", args.orgId).eq("name", args.client.name)
+      )
+      .first();
+    if (clientByName) {
+      clientId = clientByName._id;
+    }
   }
 
-  const serviceIds = args.services
-    .map((service) => ctx.db.normalizeId("services", service))
-    .filter((id): id is Id<"services"> => id !== null);
+  if (!clientId) {
+    // Given current schema, clients require assessmentId, carId, and address.
+    // Avoid creating an incomplete client here.
+    throw new Error(
+      "Client not found. Please create the client (with required details) before creating an assessment."
+    );
+  }
+
+  const normalizedServiceIds = args.services.map((serviceIdStr) =>
+    ctx.db.normalizeId("services", serviceIdStr)
+  );
+  const invalidServiceIndexes = normalizedServiceIds
+    .map((id, idx) => (id === null ? idx : -1))
+    .filter((idx) => idx !== -1);
+
+  if (invalidServiceIndexes.length > 0) {
+    const invalidServices = invalidServiceIndexes.map((idx) => args.services[idx]);
+    throw new Error(
+      `Invalid service IDs provided: ${invalidServices.join(", ")}`
+    );
+  }
+
+  const serviceIds: Id<"services">[] = normalizedServiceIds.filter(
+    (id): id is Id<"services"> => id !== null
+  );
+
+  if (serviceIds.length === 0) {
+    throw new Error("At least one valid serviceId is required.");
+  }
 
   return await ctx.db.insert("assessments", {
     clientId: clientId,
@@ -85,7 +116,8 @@ export async function createAssessmentModel(
     userId: args.userId,
     status: "pending" as AssessmentStatus,
     carColor: args.carColor,
-    serviceId: args.serviceIds[0], // Assuming the first service is the main one
+    serviceId: serviceIds[0],
+    clientName: args.client.name
   });
 }
 
