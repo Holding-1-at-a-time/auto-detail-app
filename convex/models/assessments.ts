@@ -34,8 +34,12 @@ interface AssessmentDocument {
 export type CreateAssessmentInput = {
   orgId: Id<"organizations">;
   userId: Id<"users">;
-  serviceId: Id<"services">,
-  client: ClientInput;
+  serviceId: Id<"services">;
+  client: {
+    name: string;
+    email?: string;
+    phone?: string;
+  };
   carMake: string;
   carModel: string;
   carYear: number;
@@ -47,6 +51,10 @@ export async function createAssessmentModel(
   ctx: MutationCtx,
   args: CreateAssessmentInput,
 ): Promise<Id<"assessments">> {
+  // Ensure the client is valid and exists in the database
+  if (!args.client.email && !args.client.name) {
+    throw new Error("A valid client email or name is required.");
+  }
   const identity = await ctx.auth.getUserIdentity();
   if (!identity) {
     throw new Error("You must be logged in to create an assessment.");
@@ -110,20 +118,19 @@ export async function createAssessmentModel(
   }
 
   return await ctx.db.insert("assessments", {
-    clientId: clientId,
+    orgId: args.orgId,
+    userId: args.userId,
+    serviceId: args.serviceId,
+    clientId,
+    clientName: args.client.name,
     carMake: args.carMake,
     carModel: args.carModel,
     carYear: args.carYear,
-    serviceId: args.serviceId,
-    notes: args.notes,
-    orgId: args.orgId,
-    userId: args.userId,
-    status: "pending" as AssessmentStatus,
     carColor: args.carColor ?? "Unknown",
-    clientName: args.client.name
+    notes: args.notes,
+    status: "pending",
   });
 }
-
 // Delete an assessment by Id
 export async function deleteAssessmentModel(
   ctx: MutationCtx,
