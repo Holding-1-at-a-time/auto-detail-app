@@ -1,9 +1,17 @@
 {
   "cSpell.words": [
+    "bytestrings",
+    "codacy",
+    "dont",
+    "Donts",
     "Graphene",
+    "Ints",
+    "orgslug",
     "qrcode",
+    "Steph",
     "svix",
-    "tablename"
+    "tablename",
+    "typesafe"
   ],
   "codium.codeCompletion.enable": true
 }
