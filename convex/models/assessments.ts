@@ -4,23 +4,44 @@ import { Id } from "../_generated/dataModel";
 
 export type AssessmentStatus = "pending" | "reviewed" | "complete";
 
-export type CreateAssessmentInput = {
-  orgId: Id<"organizations">;
-  userId: Id<"users">;
-  client: {
-    name: string;
-    email?: string;
-    phone?: string;
-  };
+interface ClientInput {
+  name: string;
+  email?: string;
+  phone?: string;
+}
+
+interface CarInput {
+  make: string;
+  model: string;
+  year: number;
+  color?: string;
+}
+
+interface AssessmentDocument {
+  clientId: Id<"clients">;
   carMake: string;
   carModel: string;
   carYear: number;
+  serviceId: Id<"services">;
+  notes?: string;
+  orgId: Id<"organizations">;
+  userId: Id<"users">;
+  status: AssessmentStatus;
+  carColor: string;
+  clientName: string;
+}
 
+export type CreateAssessmentInput = {
+  orgId: Id<"organizations">;
+  userId: Id<"users">;
+  serviceId: Id<"services">,
+  client: ClientInput;
+  carMake: string;
+  carModel: string;
+  carYear: number;
   carColor?: string; // Optional; defaults to "Unknown" if not provided
-  services: string[]; // Service document IDs as strings; will be normalized
   notes?: string;
 };
-
 // Create a new assessment document and return its Id
 export async function createAssessmentModel(
   ctx: MutationCtx,
@@ -83,26 +104,9 @@ export async function createAssessmentModel(
     );
   }
 
-  const normalizedServiceIds = args.services.map((serviceIdStr) =>
-    ctx.db.normalizeId("services", serviceIdStr)
-  );
-  const invalidServiceIndexes = normalizedServiceIds
-    .map((id, idx) => (id === null ? idx : -1))
-    .filter((idx) => idx !== -1);
-
-  if (invalidServiceIndexes.length > 0) {
-    const invalidServices = invalidServiceIndexes.map((idx) => args.services[idx]);
-    throw new Error(
-      `Invalid service IDs provided: ${invalidServices.join(", ")}`
-    );
-  }
-
-  const serviceIds: Id<"services">[] = normalizedServiceIds.filter(
-    (id): id is Id<"services"> => id !== null
-  );
-
-  if (serviceIds.length === 0) {
-    throw new Error("At least one valid serviceId is required.");
+  // serviceId is already an Id<"services">, so just use it directly
+  if (!args.serviceId) {
+    throw new Error("A valid serviceId is required.");
   }
 
   return await ctx.db.insert("assessments", {
@@ -110,13 +114,12 @@ export async function createAssessmentModel(
     carMake: args.carMake,
     carModel: args.carModel,
     carYear: args.carYear,
-    serviceIds,
+    serviceId: args.serviceId,
     notes: args.notes,
     orgId: args.orgId,
     userId: args.userId,
     status: "pending" as AssessmentStatus,
     carColor: args.carColor ?? "Unknown",
-    serviceId: serviceIds[0],
     clientName: args.client.name
   });
 }

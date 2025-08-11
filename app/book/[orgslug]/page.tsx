@@ -71,7 +71,7 @@ export default function PublicBookingPage({
       carMake: formData.get("carMake") as string,
       carModel: formData.get("carModel") as string,
       carYear: carYear,
-      serviceIds: serviceIds,
+      serviceId: formData.get("serviceId") as Id<"services">,
       notes: formData.get("notes") as string,
       userId: user.id as Id<"users">
     }).then(() => {

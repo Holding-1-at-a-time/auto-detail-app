@@ -47,9 +47,7 @@ export const searchByName = query({
 
         return ctx.db
             .query("clients")
-            .withSearchIndex("search_name", (q) =>
-                q.search("name", args.name).eq("orgId", args.orgId)
-            )
+            .withIndex("by_name", (q) => q.eq("name", args.name))
             .take(10);
     }
 });

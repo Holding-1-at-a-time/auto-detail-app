@@ -68,7 +68,7 @@ export const publicCreateAssessment = mutation({
     carModel: v.string(),
     carYear: v.number(),
     carColor: v.optional(v.string()),
-    serviceIds: v.array(v.id("services")),
+    serviceId: v.id("services"), // Changed from serviceId to serviceId
     notes: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
@@ -94,8 +94,8 @@ export const publicCreateAssessment = mutation({
     if (!args.carYear) {
       throw new Error("Missing carYear");
     }
-    if (!args.serviceIds) {
-      throw new Error("Missing serviceIds");
+    if (!args.serviceId) {
+      throw new Error("Missing serviceId"); // Changed from serviceId to serviceId
     }
     try {
       // Find an existing client by org and name. Public flow requires an existing client.
@@ -119,8 +119,7 @@ export const publicCreateAssessment = mutation({
         carModel: args.carModel,
         carYear: args.carYear,
         carColor: args.carColor ?? "Unknown",
-        serviceIds: args.serviceIds,
-        serviceId: args.serviceIds[0], // Use the first service as the primary one
+        serviceId: args.serviceId, // Changed from serviceId to serviceId
         notes: args.notes,
         status: "pending",
       });

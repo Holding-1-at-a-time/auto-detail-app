@@ -39,7 +39,7 @@ const serviceOptions = [
   { id: "paint-correction", label: "Paint Correction" },
   { id: "ceramic-coating", label: "Ceramic Coating" },
 ] as const;
-const serviceIds = [
+const serviceId = [
   "interior-detail",
   "exterior-wash",
   "paint-correction",
@@ -54,7 +54,7 @@ const formSchema = z.object({
   carMake: z.string().min(2, "Make is required."),
   carModel: z.string().min(2, "Model is required."),
   carYear: z.number().int("Year must be an integer").min(1900, "Year must be 1900 or later").max(new Date().getFullYear() + 1, "Year cannot be in the future beyond next year"),
-  services: z.array(z.enum(serviceIds)).min(1, "You have to select at least one service."),
+  services: z.array(z.enum(serviceId)).min(1, "You have to select at least one service."),
   notes: z.string().optional(),
 });
 

@@ -13,6 +13,8 @@ export const createAssessment = mutation({
   args: {
     orgId: v.id("organizations"), // The Clerk Organization ID
     userId: v.id("users"), // The Clerk User ID
+    serviceId: v.id("services"),
+    clientId: v.id("clients"),
     client: v.object({
       name: v.string(),
       email: v.optional(v.string()),
@@ -21,7 +23,6 @@ export const createAssessment = mutation({
     carMake: v.string(),
     carModel: v.string(),
     carYear: v.number(),
-    services: v.array(v.string()),
     notes: v.optional(v.string()),
   },
   handler: async (ctx, args) => {

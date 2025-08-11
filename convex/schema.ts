@@ -48,8 +48,7 @@ export default defineSchema({
     carMake: v.string(),
     carModel: v.string(),
     carYear: v.number(),
-    carColor: v.string(),
-    serviceIds: v.array(v.id("services")), // Link to the services table
+    carColor: v.optional(v.string()),
     notes: v.optional(v.string()),
     status: v.union(
       v.literal("pending"),
@@ -59,7 +58,7 @@ export default defineSchema({
   }).index("by_orgId", ["orgId"])
     .index("by_userId", ["userId"])
     .index("by_status", ["status"])
-    .index("by_serviceIds", ["serviceIds"])
+    .index("by_serviceId", ["serviceId"])
     .index("by_clientId", ["clientId"]),
 
   // User profile now includes the organization ID
@@ -167,8 +166,5 @@ export default defineSchema({
     .index("by_name", ["name"])
     .index("by_orgId_and_name", ["orgId", "name"])
     .index("by_orgId_and_email", ["orgId", "email"])
-    .searchIndex("search_name", {
-      searchField: "name",
-      filterFields: ["orgId"],
-    }),
-});
+    })
+    
