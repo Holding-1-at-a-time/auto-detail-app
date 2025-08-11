@@ -1,0 +1,219 @@
+{
+  "projectBestPractices": {
+    "projectPurpose": {
+      "description": "Next.js (App Router) application for an auto-detailing business with multi-organization support.",
+      "features": [
+        "Client assessments, services management, and booking links",
+        "Authentication and organization management via Clerk",
+        "Real-time data and persistence via Convex",
+        "TypeScript-first codebase using shadcn/ui, TailwindCSS, and Zod for forms"
+      ],
+      "primaryDomainConcerns": [
+        "Multi-tenant data isolation (org scoping)",
+        "Strong typing and validation across client and server",
+        "Consistent UX with accessible, reusable UI components"
+      ]
+    },
+    "subdirectories": {
+      "(app)/[organizationId]": "Authenticated, org-scoped pages (dashboard, settings)",
+      "(client)": "Client-facing pages (e.g., assessment creation)",
+      "book/[orgslug]": "Public booking pages"
+    },
+    "files": [
+      "layout.tsx"
+    ]
+  },
+  "components": "Reusable UI and navigation components (shadcn/ui style)",
+  "convex": {
+    "description": "Convex backend (schema.ts, queries, mutations, models/)",
+    "subdirectories": {
+      "models": "Domain-level server helpers (e.g., assessments model)"
+    }
+  },
+  "lib/utils/types": "Shared helpers, types, and role definitions",
+  "configFiles": [
+    ".env.local",
+    "eslint.config.mjs",
+    ".prettierrc",
+    "tailwind.config.ts",
+    "postcss.config.mjs",
+    "tsconfig.json"
+  ],
+  "entrypoints": [
+    "Next.js runtime via app/ with middleware.ts (Clerk integration)",
+    "Convex runtime via convex files with schema-defined tables and indexes"
+  ],
+  "configuration": {
+    "envVariables": [
+      "Clerk keys",
+      "Admin user ID",
+      "Convex environment settings"
+    ],
+    "designSystem": [
+      "Tailwind",
+      "shadcn/ui"
+    ]
+  },
+  "testStrategy": {
+    "frameworks": {
+      "unit": [
+        "Vitest",
+        "Jest"
+      ],
+      "reactComponents": [
+        "Testing Library",
+        "jest-dom"
+      ],
+      "e2e": [
+        "Playwright"
+      ]
+    },
+    "structure": {
+      "testsDir": "tests/",
+      "unitTests": "__tests__/",
+      "mocks": [
+        "MSW",
+        "Stubbed Convex hooks"
+      ]
+    },
+    "philosophy": [
+      "Unit tests for pure utilities",
+      "Integration tests for data-fetching components and forms",
+      "E2E for critical flows"
+    ],
+    "coverage": "80%+ for domain-critical flows",
+    "ci": "GitHub Action for lint, typecheck, unit tests, and E2E"
+  },
+  "codeStyle": {
+    "typescript": [
+      "Strict mode on",
+      "Use generated Convex types",
+      "Validate args/returns",
+      "Avoid unsafe casts"
+    ],
+    "react": [
+      "Function components with explicit prop types",
+      "Explicit loading/error states",
+      "Derive state from single sources of truth"
+    ],
+    "naming": {
+      "files": "kebab-case/Next.js conventions",
+      "constants": "SCREAMING_SNAKE_CASE",
+      "variables": "camelCase",
+      "components": "PascalCase"
+    },
+    "commentsDocs": [
+      "JSDoc/TSDoc for exports",
+      "Self-documenting code"
+    ],
+    "errorHandling": [
+      "Throw explicit errors for unauthorized/forbidden",
+      "User-friendly UI messages"
+    ],
+    "accessibility": [
+      "Correct ARIA attributes",
+      "Keyboard navigation"
+    ],
+    "formatting": [
+      "Prettier",
+      "ESLint",
+      "Run in CI"
+    ]
+  },
+  "commonPatterns": {
+    "convexFunctions": [
+      "New syntax with args/returns validation",
+      "Prefer withIndex over filter",
+      "Thin public functions using model helpers",
+      "Internal-only functions with internalQuery/internalMutation/internalAction"
+    ],
+    "organizationScoping": [
+      "Retrieve Convex org doc first",
+      "Never cast Clerk orgId to Convex Id"
+    ],
+    "reactDataFetching": [
+      "useQuery with skip",
+      "useMutation for writes with optional optimistic UI"
+    ],
+    "forms": [
+      "react-hook-form + zodResolver",
+      "Loading/error states",
+      "Editable inputs unless locked"
+    ],
+    "uiConsistency": [
+      "Centralized navigation config",
+      "Unified fallback text",
+      "Consistent date formatting"
+    ],
+    "typing": [
+      "Precise union types",
+      "readonly arrays and as const"
+    ],
+    "performance": [
+      "Exact indexes",
+      "Use paginate for large sets"
+    ]
+  },
+  "dosAndDonts": {
+    "do": [
+      "Use Convex org doc IDs",
+      "Validate args/returns",
+      "Throw explicit auth errors",
+      "Add indexes before using withIndex",
+      "Skip queries until args are available",
+      "Implement UI states for forms/mutations",
+      "Use ARIA attributes correctly",
+      "Consistent date formatting"
+    ],
+    "dont": [
+      "Don’t pass Clerk IDs to Convex",
+      "Don’t cast strings to Id types",
+      "Don’t hide auth issues with empty arrays",
+      "Don’t overuse ctx.runQuery/ctx.runMutation",
+      "Don’t collect unbounded queries",
+      "Don’t use any or implicit any"
+    ]
+  },
+  "toolsAndDependencies": {
+    "frameworksLibs": [
+      "Next.js",
+      "React",
+      "TypeScript",
+      "Convex",
+      "Clerk",
+      "TailwindCSS",
+      "shadcn/ui",
+      "Zod",
+      "react-hook-form",
+      "Sonner",
+      "lucide-react",
+      "qrcode.react"
+    ],
+    "setup": {
+      "install": "pnpm install",
+      "dev": [
+        "npx convex dev",
+        "pnpm dev"
+      ],
+      "env": [
+        "Clerk keys",
+        "Convex settings",
+        "ADMIN_USER_ID"
+      ]
+    },
+    "quality": [
+      "pnpm lint",
+      "pnpm typecheck",
+      "pnpm format",
+      "CI jobs"
+    ]
+  },
+  "otherNotes": [
+    "Always use Convex document IDs",
+    "Keep schema indexes aligned with queries",
+    "Use model helpers for business logic",
+    "Public booking links via organization.slug",
+    "Strict props/event types for components",
+    "Maintain accessibility and design tokens"
+  ]
+}

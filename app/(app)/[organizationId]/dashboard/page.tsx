@@ -4,6 +4,7 @@
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 
 import {
   Table,
@@ -22,6 +23,11 @@ import { useCallback } from "react";
 // Main Dashboard Page Component
 export default function DashboardPage() {
   const router = useRouter();
+  // Typed destructure for useParams
+  const { organizationId } = useParams<{ organizationId: string }>();
+
+  // TODO: If you want to fetch by explicit orgId, use getOrganizationForUser and provide userId/orgId
+  // getOrganization uses the authenticated user's orgId and takes no arguments
   const orgDoc = useQuery(api.organizations.getOrganization);
   const assessments = useQuery(
     api.assessments.getByOrg,
