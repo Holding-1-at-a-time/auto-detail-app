@@ -27,47 +27,35 @@ function ManageServicesCard() {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-        setIsSubmitting(true);
-        const formData = new FormData(event.currentTarget);
-        const name = formData.get('name') as string;
-        const price = Number(formData.get('price'));
-        const orgId = orgDoc?._id;
-        const userId = currentUser?._id;
+      event.preventDefault();
+      setIsSubmitting(true);
+      const formData = new FormData(event.currentTarget);
+      const name = formData.get('name') as string;
+      const price = Number(formData.get('price'));
+      const orgId = orgDoc?._id;
+      const userId = currentUser?._id;
 
-        if (!orgId || !userId) {
-            toast.error("Organization or user ID is missing.");
-            setIsSubmitting(false);
-            return;
-        }
+      if (!orgId || !userId) {
+        toast.error("Organization or user ID is missing.");
+        setIsSubmitting(false);
+        return;
+      }
 
-        // Dummy data for fields not in the form
-        const clientName = 'default-client';
-        const carMake = 'default-make';
-        const carModel = 'default-model';
-        const carYear = 2022;
-
-        try {
-            await createService({
-                orgId: orgId,
-                name,
-                price,
-                userId: userId,
-                clientName,
-                carMake,
-                carModel,
-                carYear,
-                carColor: '',
-                status: 'pending'
-            });
-            toast.success("New service has been added.");
-            event.currentTarget.reset();
-        } catch (error) {
-            toast.error("Failed to add the service.");
-            console.error(error);
-        } finally {
-            setIsSubmitting(false);
-        }
+      try {
+        await createService({
+          orgId,
+          userId,
+          name,
+          price,
+        });
+        toast.success("New service has been added.");
+        event.currentTarget.reset();
+      } catch (error) {
+        toast.error("Failed to add the service.");
+        console.error(error);
+      } finally {
+        setIsSubmitting(false);
+      }
     };
 
     return (

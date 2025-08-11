@@ -31,6 +31,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { useRouter } from "next/navigation";
 import ClientSelector from "./ClientSelector";
+import { Id } from "@/convex/_generated/dataModel";
 
 // Service options and a strict union of service IDs
 const serviceOptions = [
@@ -51,6 +52,7 @@ const formSchema = z.object({
   clientName: z.string().min(2, "Name must be at least 2 characters."),
   clientEmail: z.string().email("Invalid email address.").optional().or(z.literal("")),
   clientPhone: z.string().optional(),
+  clientId: z.string().optional(),
   carMake: z.string().min(2, "Make is required."),
   carModel: z.string().min(2, "Model is required."),
   carYear: z.number().int("Year must be an integer").min(1900, "Year must be 1900 or later").max(new Date().getFullYear() + 1, "Year cannot be in the future beyond next year"),
@@ -78,11 +80,13 @@ export default function NewAssessmentPage() {
   const currentUser = useQuery(api.users.getCurrentUser);
 
   const form = useForm<FormValues, any>({
+    
     resolver: zodResolver(formSchema),
     defaultValues: {
       clientName: "",
       clientEmail: "",
       clientPhone: "",
+      clientId: undefined,
       carMake: "",
       carModel: "",
       carYear: new Date().getFullYear(),
@@ -110,8 +114,9 @@ export default function NewAssessmentPage() {
         carMake: values.carMake,
         carModel: values.carModel,
         carYear: values.carYear,
-        services: values.services,
         notes: values.notes || undefined,
+        clientId: values.clientId as Id<"clients">,
+        serviceId: values.services[0] as Id<"services">
       });
 
       toast.success("Assessment created successfully!");

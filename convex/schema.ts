@@ -19,24 +19,20 @@ export default defineSchema({
   services: defineTable({
     orgId: v.id("organizations"),
     userId: v.id("users"),
-    name: v.string(),
-    price: v.number(),
-    carMake: v.string(),
-    carModel: v.string(),
-    carYear: v.number(),
-    carColor: v.string(),
-    notes: v.optional(v.string()),
-    status: v.union(
-      v.literal("pending"),
-      v.literal("reviewed"),
-      v.literal("complete"),
-      v.literal("cancelled"),
-    ),
-
-  }).index("by_orgId", ["orgId"])
+    name: v.string(), // e.g. "Full Interior Detail"
+    price: v.number(), // e.g. 199.99
+    description: v.optional(v.string()), // e.g. "Deep clean of all interior surfaces"
+    category: v.optional(v.string()), // e.g. "Interior", "Exterior", "Paint", "Add-on"
+    durationMinutes: v.optional(v.number()), // e.g. 120 (for 2 hours)
+    isActive: v.optional(v.boolean()), // For hiding/disabling services
+    imageUrl: v.optional(v.string()), // For marketing or booking UI
+    updatedAt: v.optional(v.number()), // Unix timestamp for last update
+  })
+    .index("by_orgId", ["orgId"])
     .index("by_name", ["name"])
-    .index("by_price", ["price"]),
-
+    .index("by_price", ["price"])
+    .index("by_category", ["category"])
+    .index("by_isActive", ["isActive"]),
 
   // Assessments now belong to an organization and a user
   assessments: defineTable({
@@ -166,5 +162,4 @@ export default defineSchema({
     .index("by_name", ["name"])
     .index("by_orgId_and_name", ["orgId", "name"])
     .index("by_orgId_and_email", ["orgId", "email"])
-    })
-    
+})

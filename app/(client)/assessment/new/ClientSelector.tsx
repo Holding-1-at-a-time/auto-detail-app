@@ -35,6 +35,7 @@ interface ClientSelectorProps {
 }
 
 export default function ClientSelector({ form }: ClientSelectorProps) {
+  const { setValue } = form;
   useOrganization();
   const [searchClientName, setSearchClientName] = useState("");
   const [debouncedSearchClientName, setDebouncedSearchClientName] = useState("");
@@ -62,6 +63,7 @@ export default function ClientSelector({ form }: ClientSelectorProps) {
     form.setValue("clientEmail", client.email ?? "");
     form.setValue("clientPhone", client.phone ?? "");
     setSelectedClientId(client._id);
+    form.setValue("clientId", client._id);
     setClientSelectorOpen(false);
     setSearchClientName("");
   };

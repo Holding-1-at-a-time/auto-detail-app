@@ -35,11 +35,7 @@ export type CreateAssessmentInput = {
   orgId: Id<"organizations">;
   userId: Id<"users">;
   serviceId: Id<"services">;
-  client: {
-    name: string;
-    email?: string;
-    phone?: string;
-  };
+  client: ClientInput;
   carMake: string;
   carModel: string;
   carYear: number;
@@ -115,6 +111,18 @@ export async function createAssessmentModel(
   // serviceId is already an Id<"services">, so just use it directly
   if (!args.serviceId) {
     throw new Error("A valid serviceId is required.");
+  }
+
+  // Validate organization membership
+  const user = await ctx.db.get(args.userId);
+  if (!user || user.orgId !== args.orgId) {
+    throw new Error("User is not a member of the specified organization");
+  }
+
+  // Validate service existence and ownership
+  const service = await ctx.db.get(args.serviceId);
+  if (!service || service.orgId !== args.orgId) {
+    throw new Error("Service not found or does not belong to the specified organization");
   }
 
   return await ctx.db.insert("assessments", {
