@@ -13,9 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
-/**
- * Renders a card for managing business services.
- */
+
 function ManageServicesCard() {
     const orgDoc = useQuery(api.organizations.getOrganization);
     const currentUser = useQuery(api.users.getCurrentUser);

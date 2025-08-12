@@ -19,7 +19,7 @@ export default function Header() {
                 <div className="flex items-center gap-4">
                     <SignedIn>
                         <Button asChild>
-                            <Link href="/dashboard">Client Dashboard</Link>
+                            <Link href={`/${organizationId}/dashboard`}>Client Dashboard</Link>
                         </Button>
                         <UserButton afterSignOutUrl="/" />
                     </SignedIn>

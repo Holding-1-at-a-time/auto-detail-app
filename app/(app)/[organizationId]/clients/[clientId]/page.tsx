@@ -22,6 +22,17 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
+/**
+ * Displays detailed information about a specific client, including their contact details and assessment history.
+ *
+ * Fetches client information and their associated assessments based on the `clientId` obtained from the URL parameters.
+ * If the data is loading or unavailable, appropriate loading or error messages are displayed.
+ * 
+ * Renders the client's name, email address, and phone number in a card, followed by a table listing all assessments
+ * associated with the client. Each assessment row displays the vehicle details, status, and creation date.
+ * If no assessments are found, a message is displayed instead.
+ */
+
 export default function ClientDetailsPage() {
   const params = useParams();
   const clientId = params.clientId as Id<"clients">;

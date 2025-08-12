@@ -177,7 +177,7 @@ export default function HomePage() {
               <ul className="space-y-2 text-sm">
                 <li><Link href="#" className="text-muted-foreground hover:text-primary">Home</Link></li>
                 <li><Link href="#services" className="text-muted-foreground hover:text-primary">Services</Link></li>
-                <li><Link href="/dashboard" className="text-muted-foreground hover:text-primary">My Dashboard</Link></li>
+                <li><Link href={`/${organizationId}/dashboard`} className="text-muted-foreground hover:text-primary">My Dashboard</Link></li>
               </ul>
             </div>
             <div>

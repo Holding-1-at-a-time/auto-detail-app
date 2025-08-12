@@ -23,6 +23,31 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
+/**
+ * Displays a page for managing clients within the organization.
+ *
+ * This page retrieves and displays a list of all clients associated with the
+ * currently selected organization. If the organization or client data is loading,
+ * a loading message is shown. Once loaded, the list of clients is displayed in a
+ * table format with columns for client name, email, and phone number. Each client
+ * entry includes a button to view detailed information about the client.
+ * 
+ * If no clients are found, a message is displayed indicating that new clients will
+ * appear after creating an assessment.
+ */
+
+/**
+ * Renders a page that allows users to manage clients within their organization.
+ * 
+ * Fetches and displays a list of clients associated with the currently selected organization.
+ * The list includes columns for client name, email, and phone number, and provides a button for
+ * viewing detailed information about each client. 
+ * 
+ * If the organization is not selected or client data is loading, an appropriate message is shown.
+ * In case no clients are found, a message is displayed indicating that new clients will appear 
+ * after creating an assessment.
+ */
+
 export default function ClientsPage() {
   const { organization } = useOrganization();
   const clients = useQuery(

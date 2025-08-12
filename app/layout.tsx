@@ -4,8 +4,8 @@ import "./globals.css";
 import ConvexClientProvider from "@/components/ConvexClientProvider";
 import { ClerkProvider } from "@clerk/nextjs";
 import Header from "@/components/nav/Header";
-import { dark } from '@clerk/themes'
 import { Toaster } from "@/components/ui/sonner"; // Import from the new location
+import { dark } from "@clerk/themes";
 
 
 

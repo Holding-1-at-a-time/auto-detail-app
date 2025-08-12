@@ -20,6 +20,14 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 
+/**
+ * Page for an admin to review and manage all incoming client assessments.
+ *
+ * This page will only render data if the logged-in user's ID matches
+ * ADMIN_USER_ID. The table displays the client name, vehicle info, notes, and
+ * status of each assessment. The status is displayed as a badge that changes
+ * color depending on whether the assessment is pending or complete.
+ */
 export default function AdminPage() {
     // This query will only return data if the logged-in user's ID matches ADMIN_USER_ID
     const assessments = useQuery(api.assessments.getAllAssessments);

@@ -33,6 +33,16 @@ export type AssessmentActionsProps = {
   assessment: Doc<"assessments">;
 };
 
+/**
+ * AssessmentActions
+ *
+ * A dropdown menu with buttons to delete an assessment or change its status.
+ *
+ * @param assessment The assessment document to operate on.
+ *
+ * @returns A dropdown menu with buttons to delete an assessment or change its
+ * status.
+ */
 export default function AssessmentActions({ assessment }: AssessmentActionsProps) {
   const deleteAssessment = useMutation(api.assessments.deleteAssessment);
   const updateAssessmentStatus = useMutation(
