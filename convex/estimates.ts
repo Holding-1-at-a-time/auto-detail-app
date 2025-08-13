@@ -60,11 +60,11 @@ export const calculate = query({
     const TAX_RATE = 0.0825; // Example: 8.25%
     const DISCOUNT_PERCENTAGE = 0; // Example: No discount by default
 
-    const discount = subtotal * DISCOUNT_PERCENTAGE;
-    const taxableSubtotal = subtotal - discount;
-    const tax = taxableSubtotal * TAX_RATE;
-    const total = taxableSubtotal + tax;
-
+    const round2 = (n: number) => Math.round(n * 100) / 100;
+    const discount = round2(subtotal * DISCOUNT_PERCENTAGE);
+    const taxableSubtotal = Math.max(0, round2(subtotal - discount));
+    const tax = round2(taxableSubtotal * TAX_RATE);
+    const total = round2(taxableSubtotal + tax);
     return {
       lineItems,
       subtotal,
