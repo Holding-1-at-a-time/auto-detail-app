@@ -46,7 +46,7 @@ export const getOrgForBooking = query({
     // Find the services offered by this organization
     const services = await ctx.db
       .query("services")
-      .withIndex("by_orgId", (q) => q.eq("orgId", org.orgId))
+      .withIndex("by_orgId", (q) => q.eq("orgId", org._id))
       .collect();
 
     // Find the modifiers for this organization
