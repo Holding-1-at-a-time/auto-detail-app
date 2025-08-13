@@ -49,11 +49,18 @@ export const getOrgForBooking = query({
       .withIndex("by_orgId", (q) => q.eq("orgId", org._id))
       .collect();
 
+    // Find the modifiers for this organization
+    const modifiers = await ctx.db
+      .query("modifiers")
+      .withIndex("by_orgId", (q) => q.eq("orgId", org.orgId))
+      .collect();
+
     return {
       orgName: org.orgName,
       orgImageUrl: org.logo,
       orgId: org.orgId,
       services,
+      modifiers,
     };
   },
 });

@@ -13,50 +13,62 @@
 // convex/schema.ts
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
+import { ca } from "zod/locales";
 
 export default defineSchema({
-  // NEW: Table to store business-specific services
+  // ENHANCED: Services table with more detail
   services: defineTable({
-    orgId: v.id("organizations"),
-    userId: v.id("users"),
-    name: v.string(), // e.g. "Full Interior Detail"
-    price: v.number(), // e.g. 199.99
-    description: v.optional(v.string()), // e.g. "Deep clean of all interior surfaces"
-    category: v.optional(v.string()), // e.g. "Interior", "Exterior", "Paint", "Add-on"
-    durationMinutes: v.optional(v.number()), // e.g. 120 (for 2 hours)
-    isActive: v.optional(v.boolean()), // For hiding/disabling services
-    imageUrl: v.optional(v.string()), // For marketing or booking UI
-    updatedAt: v.optional(v.number()), // Unix timestamp for last update
-  })
-    .index("by_orgId", ["orgId"])
-    .index("by_name", ["name"])
-    .index("by_price", ["price"])
-    .index("by_category", ["category"])
-    .index("by_isActive", ["isActive"]),
+    orgId: v.string(),
+    name: v.string(),
+    description: v.string(),
+    basePrice: v.number(),
+    durationMinutes: v.number(),
+    category: v.string(),
+    isActive: v.boolean(),
+    imageUrl: v.string(),
+    type: v.union(v.literal("base"), v.literal("add_on")),
+  }).index("by_orgId", ["orgId"]),
 
-  // Assessments now belong to an organization and a user
+  // NEW: Modifiers for conditional up-charges
+  modifiers: defineTable({
+    orgId: v.string(),
+    name: v.string(), // e.g., "Excessive Pet Hair"
+    price: v.number(),
+    description: v.string(),
+  }).index("by_orgId", ["orgId"]),
+
+  // ENHANCED: Assessments now store a full itemized estimate
   assessments: defineTable({
-    orgId: v.id('organizations'), // The Clerk Organization ID
-    userId: v.id("users"), // The Clerk User ID
+    orgId: v.id("organizations"),
     clientId: v.id("clients"),
-    serviceId: v.id("services"), // The Service ID
     clientName: v.string(),
+    clientEmail: v.string(),
     carMake: v.string(),
     carModel: v.string(),
     carYear: v.number(),
-    carColor: v.optional(v.string()),
     notes: v.optional(v.string()),
     status: v.union(
       v.literal("pending"),
       v.literal("reviewed"),
       v.literal("complete")
     ),
-  }).index("by_orgId", ["orgId"])
-    .index("by_userId", ["userId"])
-    .index("by_status", ["status"])
-    .index("by_serviceId", ["serviceId"])
-    .index("by_clientId", ["clientId"]),
 
+    // NEW estimate fields
+    lineItems: v.array(
+      v.object({
+        type: v.union(v.literal("service"), v.literal("modifier")),
+        name: v.string(),
+        price: v.number(),
+      })
+    ),
+    subtotal: v.number(),
+    discount: v.optional(v.number()),
+    tax: v.number(),
+    total: v.number(),
+  }).index("by_orgId", ["orgId"])
+  .index("by_orgId_and_clientId", ["orgId", "clientId"])
+    .index("by_clientId", ["clientId"]),
+  
   // User profile now includes the organization ID
   users: defineTable({
     orgId: v.id("organizations"), // The Clerk Organization ID

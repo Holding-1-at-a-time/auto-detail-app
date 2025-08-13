@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Key, ReactElement, JSXElementConstructor, ReactNode, ReactPortal } from "react";
+import { string } from "zod";
 import { useUser } from "@clerk/clerk-react";
 
 export default function PublicBookingPage({
@@ -30,6 +32,16 @@ export default function PublicBookingPage({
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
+    const serviceIds = formData
+      .getAll("serviceIds")
+      .map((id) => {
+        // Ensure id is a string and matches expected format (add your own validation if needed)
+        if (typeof id === "string" && id.trim() !== "") {
+          return id as Id<"services">;
+        }
+        return null;
+      })
+      .filter((id): id is Id<"services"> => id !== null);
 
     if (!user) {
       console.error("User is not authenticated");
@@ -89,7 +101,7 @@ export default function PublicBookingPage({
           <h3 className="font-semibold mb-2">Select Services:</h3>
           <div className="space-y-2">
 
-            {orgData.services.map((service: { _id: string; name: string; price: number }) => (
+            {orgData.services.map((service) => (
               <div key={String(service._id)} className="flex items-center gap-2">
                 <Checkbox id={String(service._id)} name="serviceIds" value={String(service._id)} />
                 <label htmlFor={String(service._id)}>{service.name} (${service.price})</label>
