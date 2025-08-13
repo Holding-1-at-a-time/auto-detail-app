@@ -41,18 +41,20 @@ export const calculate = query({
 
     // Process services
     for (const service of services) {
-      if (service && service.orgId === args.orgId) {
-        lineItems.push({ type: "service", name: service.name, price: service.basePrice });
-        subtotal += service.basePrice;
-      }
+      if (!service || service.orgId !== args.orgId) continue;
+      const price = Number(service.basePrice ?? service.price ?? 0);
+      if (!Number.isFinite(price) || price < 0) continue;
+      lineItems.push({ type: "service", name: service.name, price });
+      subtotal += price;
     }
 
     // Process modifiers
     for (const modifier of modifiers) {
-      if (modifier && modifier.orgId === args.orgId) {
-        lineItems.push({ type: "modifier", name: modifier.name, price: modifier.price });
-        subtotal += modifier.price;
-      }
+      if (!modifier || modifier.orgId !== args.orgId) continue;
+      const price = Number(modifier.price ?? 0);
+      if (!Number.isFinite(price) || price < 0) continue;
+      lineItems.push({ type: "modifier", name: modifier.name, price });
+      subtotal += price;
     }
 
     // --- Business Logic ---
