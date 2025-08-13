@@ -79,7 +79,7 @@ export default function NewAssessmentPage() {
   const orgDoc = useQuery(api.organizations.getOrganization);
   const currentUser = useQuery(api.users.getCurrentUser);
 
-  const form = useForm<FormValues>({
+  const form = useForm<FormValues, any>({
 
     resolver: zodResolver(formSchema),
     defaultValues: {
