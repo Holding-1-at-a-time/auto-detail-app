@@ -21,11 +21,12 @@ export default function PublicBookingPage({ params }: { params: { orgSlug: strin
   const orgData = useQuery(api.public.getOrgForBooking, { slug: params.orgSlug });
 
   // Fetch the real-time estimate based on selections
-  const estimate = useQuery(api.estimates.calculate, orgData ? {
-    orgId: orgData.orgId,
-    serviceIds: selectedServices,
-    modifierIds: selectedModifiers,
-  } : "skip");
+  const estimate = useQuery(api.estimates.calculate, 
+    (orgData && (selectedServices.length > 0 || selectedModifiers.length > 0)) ? {
+      orgId: orgData.orgId,
+      serviceIds: selectedServices,
+      modifierIds: selectedModifiers,
+    } : "skip");
 
   const handleServiceChange = (serviceId: Id<"services">) => {
     setSelectedServices(prev =>
