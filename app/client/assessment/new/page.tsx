@@ -95,6 +95,12 @@ export default function NewAssessmentPage() {
     },
   });
 
+  /**
+   * Handles form submission by calling the createAssessment mutation.
+   * If the mutation is successful, resets the form and redirects to the
+   * dashboard page for the organization. If the mutation fails, displays
+   * an error message to the user and logs the error to the console.
+   */
   async function onSubmit(values: FormValues) {
     if (!orgDoc?._id || !currentUser?._id) {
       toast.error("Organization and user must be identified to create an assessment.");

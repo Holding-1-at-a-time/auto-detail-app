@@ -8,8 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Key, ReactElement, JSXElementConstructor, ReactNode, ReactPortal } from "react";
-import { string } from "zod";
 import { useUser } from "@clerk/clerk-react";
 
 export default function PublicBookingPage({
@@ -32,16 +30,6 @@ export default function PublicBookingPage({
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-    const serviceIds = formData
-      .getAll("serviceIds")
-      .map((id) => {
-        // Ensure id is a string and matches expected format (add your own validation if needed)
-        if (typeof id === "string" && id.trim() !== "") {
-          return id as Id<"services">;
-        }
-        return null;
-      })
-      .filter((id): id is Id<"services"> => id !== null);
 
     if (!user) {
       console.error("User is not authenticated");

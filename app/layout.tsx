@@ -9,7 +9,6 @@ import { dark } from "@clerk/themes";
 
 
 
-const inter = Inter({ subsets: ["latin"] });
 
 // SEO Metadata - This is crucial!
 export const metadata: Metadata = {
@@ -55,6 +54,18 @@ const geistMono = Geist_Mono({
 });
 
 
+/**
+ * The root layout component for the app.
+ *
+ * This component wraps the entire app with the Clerk provider,
+ * Convex client provider, and the Toaster component.
+ *
+ * It also sets up the font variables for the Geist Sans and Mono fonts.
+ *
+ * @param children The children of the component.
+ *
+ * @returns The root layout component.
+ */
 export default function RootLayout({
   children,
 }: Readonly<{

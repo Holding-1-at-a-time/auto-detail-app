@@ -1,13 +1,8 @@
 // components/header.tsx
 'use client';
 
-import { useRouter, useParams } from "next/navigation";
-
 import {
-    CreateOrganization,
     OrganizationSwitcher,
-    SignInButton,
-    SignUpButton,
     SignedIn,
     SignedOut,
     UserButton,
@@ -19,8 +14,6 @@ import { Button } from "@/components/ui/button";
 export default function Header() {
     const { organization } = useOrganization();
     const organizationId = organization?.id;
-    const router = useRouter();
-
 
     return (
         <header className="border-b border-white/10">
@@ -35,12 +28,8 @@ export default function Header() {
                                 <Link href={`/${organizationId}/dashboard`}>Client Dashboard</Link>
                             </Button>
                         )}
-                        router.push(`/${organizationId}/dashboard`);
-
-
-
                         <OrganizationSwitcher />
-                        <UserButton signOutUrl="/" />
+                        <UserButton />
                     </SignedIn>
                     <SignedOut>
                         {/* The buttons now act as links to the new pages */}

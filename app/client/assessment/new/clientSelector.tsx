@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "convex/react";
 import { useOrganization } from "@clerk/nextjs";
 import { UseFormReturn } from "react-hook-form";
@@ -34,8 +34,19 @@ interface ClientSelectorProps {
   form: UseFormReturn<FormValues>;
 }
 
+/**
+ * A component to select a client from a list of existing clients or create a new one.
+ * The component uses the Convex `searchByName` API to search for clients based on the user's input.
+ * If the user selects a client from the list, the component will set the `clientId` form field to the `_id` of the selected client.
+ * If the user types in a new client name, the component will create a new client and set the `clientId` form field to the `_id` of the new client.
+ * The component also supports typing in a client email or phone number, and will set the `clientEmail` and `clientPhone` form fields accordingly.
+ * The component requires the `form` prop to be passed from the parent component, which is a `react-hook-form` form.
+ * The component also requires the `organization` prop to be passed from the parent component, which is the Convex organization document.
+ * The component will use the `organization._id` to search for clients in the same organization.
+ * @param {{ form: UseFormReturn<FormValues> }} props
+ * @returns {JSX.Element}
+ */
 export default function ClientSelector({ form }: ClientSelectorProps) {
-  const { setValue } = form;
   useOrganization();
   const [searchClientName, setSearchClientName] = useState("");
   const [debouncedSearchClientName, setDebouncedSearchClientName] = useState("");
