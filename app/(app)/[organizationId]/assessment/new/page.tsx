@@ -8,6 +8,7 @@ import { api } from "@/convex/_generated/api";
 import { useOrganization } from "@clerk/nextjs";
 import { useState } from "react";
 import { toast } from "sonner";
+import * as Sentry from "@sentry/nextjs";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -32,6 +33,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useRouter } from "next/navigation";
 import { Id } from "@/convex/_generated/dataModel";
 import ClientSelector from "./clientSelector";
+const { logger } = Sentry;
 
 // Service options and a strict union of service IDs
 const serviceOptions = [
@@ -79,7 +81,7 @@ export default function NewAssessmentPage() {
   const orgDoc = useQuery(api.organizations.getOrganization);
   const currentUser = useQuery(api.users.getCurrentUser);
 
-  const form = useForm<FormValues, any>({
+  const form = useForm<FormValues>({
 
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -108,37 +110,52 @@ export default function NewAssessmentPage() {
     }
 
     setIsSubmitting(true);
-    try {
-      await createAssessment({
-        orgId: orgDoc._id,
-        userId: currentUser._id,
-        client: {
-          name: values.clientName,
-          email: values.clientEmail || undefined,
-          phone: values.clientPhone || undefined,
-        },
-        carMake: values.carMake,
-        carModel: values.carModel,
-        carYear: values.carYear,
-        notes: values.notes || undefined,
-        clientId: values.clientId as Id<"clients">,
-        serviceId: values.services[0] as Id<"services">
-      });
+    await Sentry.startSpan(
+      {
+        op: "ui.submit",
+        name: "Create Assessment Submit",
+      },
+      async (span) => {
+        try {
+          span.setAttribute("orgId", orgDoc._id);
+          span.setAttribute("userId", currentUser._id);
+          span.setAttribute("servicesCount", values.services.length);
+          span.setAttribute("hasClientId", Boolean(values.clientId));
 
-      toast.success("Assessment created successfully!");
-      form.reset();
+          await createAssessment({
+            orgId: orgDoc._id,
+            userId: currentUser._id,
+            client: {
+              name: values.clientName,
+              email: values.clientEmail || undefined,
+              phone: values.clientPhone || undefined,
+            },
+            carMake: values.carMake,
+            carModel: values.carModel,
+            carYear: values.carYear,
+            notes: values.notes || undefined,
+            clientId: values.clientId as Id<"clients">,
+            serviceId: values.services[0] as Id<"services">
+          });
 
-      // Preserve existing routing convention using Clerk org id if available
-      const dest = organization?.id ? `/${organization.id}/dashboard` : "/";
-      router.push(dest);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Unknown error";
-      toast.error(`Failed to create assessment: ${message}`);
-      // eslint-disable-next-line no-console
-      console.error("Failed to create assessment:", err);
-    } finally {
-      setIsSubmitting(false);
-    }
+          toast.success("Assessment created successfully!");
+          form.reset();
+
+          // Preserve existing routing convention using Clerk org id if available
+          const dest = organization?.id ? `/${organization.id}/dashboard` : "/";
+          router.push(dest);
+        } catch (err: unknown) {
+          Sentry.captureException(err);
+          const message = err instanceof Error ? err.message : "Unknown error";
+          toast.error(`Failed to create assessment: ${message}`);
+          logger.error("Failed to create assessment", { error: message });
+          // eslint-disable-next-line no-console
+          console.error("Failed to create assessment:", err);
+        } finally {
+          setIsSubmitting(false);
+        }
+      }
+    );
   }
 
   return (

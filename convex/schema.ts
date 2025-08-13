@@ -13,6 +13,7 @@
 // convex/schema.ts
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
+import { ca } from "zod/locales";
 
 export default defineSchema({
   // ENHANCED: Services table with more detail
@@ -21,6 +22,10 @@ export default defineSchema({
     name: v.string(),
     description: v.string(),
     basePrice: v.number(),
+    durationMinutes: v.number(),
+    category: v.string(),
+    isActive: v.boolean(),
+    imageUrl: v.string(),
     type: v.union(v.literal("base"), v.literal("add_on")),
   }).index("by_orgId", ["orgId"]),
 
@@ -34,7 +39,8 @@ export default defineSchema({
 
   // ENHANCED: Assessments now store a full itemized estimate
   assessments: defineTable({
-    orgId: v.string(),
+    orgId: v.id("organizations"),
+    clientId: v.id("clients"),
     clientName: v.string(),
     clientEmail: v.string(),
     carMake: v.string(),
@@ -59,8 +65,10 @@ export default defineSchema({
     discount: v.optional(v.number()),
     tax: v.number(),
     total: v.number(),
-  }).index("by_orgId", ["orgId"]),
-
+  }).index("by_orgId", ["orgId"])
+  .index("by_orgId_and_clientId", ["orgId", "clientId"])
+    .index("by_clientId", ["clientId"]),
+  
   // User profile now includes the organization ID
   users: defineTable({
     orgId: v.id("organizations"), // The Clerk Organization ID

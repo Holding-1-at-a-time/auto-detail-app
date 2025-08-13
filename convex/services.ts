@@ -10,7 +10,7 @@ export const createService = mutation({
     userId: v.id("users"),
     name: v.string(),
     price: v.number(),
-    description: v.optional(v.string()),
+    description: v.\\(v.string()),
     category: v.optional(v.string()),
     durationMinutes: v.optional(v.number()),
     isActive: v.optional(v.boolean()),

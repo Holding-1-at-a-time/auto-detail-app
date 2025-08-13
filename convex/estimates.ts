@@ -3,39 +3,52 @@ import { query } from "./_generated/server";
 import { v } from "convex/values";
 
 // The "algorithm" for real-time quote calculation
+/**
+ * Calculates a real-time estimate for services and modifiers.
+ *
+ * @param ctx - The Convex query context.
+ * @param args - The arguments for the query, including organization ID, service IDs, and modifier IDs.
+ * @returns An object containing line items, subtotal, discount, tax, and total.
+ */
 export const calculate = query({
   args: {
-    orgId: v.string(),
+    orgId: v.id("organizations"),
     serviceIds: v.array(v.id("services")),
     modifierIds: v.array(v.id("modifiers")),
   },
   returns: v.object({
-    lineItems: v.array(v.object({
-      type: v.string(),
-      name: v.string(),
-      price: v.number()
-    })),
+    lineItems: v.array(
+      v.object({
+        type: v.string(),
+        name: v.string(),
+        price: v.number(),
+      })
+    ),
     subtotal: v.number(),
     discount: v.number(),
     tax: v.number(),
-    total: v.number()
+    total: v.number(),
   }),
   handler: async (ctx, args) => {
     const lineItems: { type: string; name: string; price: number }[] = [];
     let subtotal = 0;
 
-    // Fetch and add selected services to the subtotal
-    for (const serviceId of args.serviceIds) {
-      const service = await ctx.db.get(serviceId);
+    // Batch fetch all services and modifiers
+    const [services, modifiers] = await Promise.all([
+      Promise.all(args.serviceIds.map(id => ctx.db.get(id))),
+      Promise.all(args.modifierIds.map(id => ctx.db.get(id))),
+    ]);
+
+    // Process services
+    for (const service of services) {
       if (service && service.orgId === args.orgId) {
         lineItems.push({ type: "service", name: service.name, price: service.basePrice });
         subtotal += service.basePrice;
       }
     }
 
-    // Fetch and add selected modifiers to the subtotal
-    for (const modifierId of args.modifierIds) {
-      const modifier = await ctx.db.get(modifierId);
+    // Process modifiers
+    for (const modifier of modifiers) {
       if (modifier && modifier.orgId === args.orgId) {
         lineItems.push({ type: "modifier", name: modifier.name, price: modifier.price });
         subtotal += modifier.price;
