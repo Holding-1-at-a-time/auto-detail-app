@@ -30,8 +30,8 @@ import {
 } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useRouter } from "next/navigation";
-import ClientSelector from "./ClientSelector";
 import { Id } from "@/convex/_generated/dataModel";
+import ClientSelector from "./clientSelector";
 
 // Service options and a strict union of service IDs
 const serviceOptions = [
