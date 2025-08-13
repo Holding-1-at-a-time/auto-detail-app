@@ -156,8 +156,8 @@ export const createEntities = internalMutation({
       const insertedServiceId = await ctx.db.insert("services", {
         orgId: svc.orgId,
         name: svc.name,
-        basePrice: svc.price,
-        type: "base", // Default to 'base' type for services created here
+        basePrice: svc.basePrice,
+        type: svc.type ?? "base",
         description: svc.description ?? "", // Ensure description is a string
         category: svc.category ?? "Uncategorized", // Ensure category is a string
         durationMinutes: svc.durationMinutes ?? 0, // Ensure durationMinutes is a number
