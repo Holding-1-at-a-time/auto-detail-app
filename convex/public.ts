@@ -46,7 +46,13 @@ export const getOrgForBooking = query({
     // Find the services offered by this organization
     const services = await ctx.db
       .query("services")
-      .withIndex("by_orgId", (q) => q.eq("orgId", org._id))
+      .withIndex("by_orgId", (q) => q.eq("orgId", org.orgId))
+      .collect();
+
+    // Find the modifiers for this organization
+    const modifiers = await ctx.db
+      .query("modifiers")
+      .withIndex("by_orgId", (q) => q.eq("orgId", org.orgId))
       .collect();
 
     return {
@@ -54,6 +60,7 @@ export const getOrgForBooking = query({
       orgImageUrl: org.logo,
       orgId: org.orgId,
       services,
+      modifiers,
     };
   },
 });

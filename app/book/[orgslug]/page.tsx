@@ -1,105 +1,149 @@
 // app/book/[orgSlug]/page.tsx
 "use client";
 
-import { useMutation, useQuery } from "convex/react";
+import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { useState } from "react";
 import { Id } from "@/convex/_generated/dataModel";
+
+// (You'll need to create these UI components or use shadcn-ui)
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { useUser } from "@clerk/clerk-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 
-export default function PublicBookingPage({
-  params,
-}: {
-  params: { orgSlug: string };
-}) {
+export default function PublicBookingPage({ params }: { params: { orgSlug: string } }) {
+  // State for the user's selections
+  const [selectedServices, setSelectedServices] = useState<Id<"services">[]>([]);
+  const [selectedModifiers, setSelectedModifiers] = useState<Id<"modifiers">[]>([]);
+
+  // Fetch the data for this organization
   const orgData = useQuery(api.public.getOrgForBooking, { slug: params.orgSlug });
-  const createAssessment = useMutation(api.public.publicCreateAssessment);
-  const { user } = useUser();
 
-  if (orgData === null) {
-    return <div>Organization not found.</div>;
-  }
+  // Fetch the real-time estimate based on selections
+  const estimate = useQuery(api.estimates.calculate, orgData ? {
+    orgId: orgData.orgId,
+    serviceIds: selectedServices,
+    modifierIds: selectedModifiers,
+  } : "skip");
 
-  if (orgData === undefined) {
-    return <div>Loading...</div>;
-  }
-
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-
-    if (!user) {
-      console.error("User is not authenticated");
-      return;
-    }
-
-    const carYearRaw = formData.get("carYear");
-    const carYear = parseInt(typeof carYearRaw === "string" ? carYearRaw.trim() : "", 10);
-
-    // Validate carYear: must be an integer and a reasonable year (e.g., between 1900 and next year)
-    const currentYear = new Date().getFullYear();
-    if (
-      !carYearRaw ||
-      isNaN(carYear) ||
-      !Number.isInteger(carYear) ||
-      String(carYear) !== (typeof carYearRaw === "string" ? carYearRaw.trim() : "") ||
-      carYear < 1900 ||
-      carYear > currentYear + 1
-    ) {
-      alert("Please enter a valid car year (must be a whole number between 1900 and next year).");
-      return;
-    }
-
-    createAssessment({
-      orgId: orgData.orgId as Id<"organizations">,
-      clientName: formData.get("clientName") as string,
-      carMake: formData.get("carMake") as string,
-      carModel: formData.get("carModel") as string,
-      carYear: carYear,
-      serviceId: formData.get("serviceId") as Id<"services">,
-      notes: formData.get("notes") as string,
-      userId: user.id as Id<"users">
-    }).then(() => {
-      alert("Assessment submitted successfully!");
-      event.currentTarget.reset();
-    }).catch((error) => {
-      console.error("Failed to submit assessment:", error);
-      alert("Failed to submit assessment. Please try again or contact support.");
-    });
+  const handleServiceChange = (serviceId: Id<"services">) => {
+    setSelectedServices(prev =>
+      prev.includes(serviceId)
+        ? prev.filter(id => id !== serviceId)
+        : [...prev, serviceId]
+    );
   };
 
+  const handleModifierChange = (modifierId: Id<"modifiers">) => {
+    setSelectedModifiers(prev =>
+      prev.includes(modifierId)
+        ? prev.filter(id => id !== modifierId)
+        : [...prev, modifierId]
+    );
+  };
+
+  // TODO: Add a final step for user details and submission
+
+  if (orgData === undefined) return <div>Loading...</div>;
+  if (orgData === null) return <div>Organization not found.</div>;
+
+  const baseServices = orgData.services?.filter(s => s.type === 'base');
+  const addOnServices = orgData.services?.filter(s => s.type === 'add_on');
+
   return (
-    <div className="container py-12">
-      <div className="text-center mb-8">
-        <img src={orgData.orgImageUrl} alt={`${orgData.orgName} logo`} className="w-24 h-24 rounded-full mx-auto mb-4" />
-        <h1 className="text-3xl font-bold">Book a Service with {orgData.orgName}</h1>
-      </div>
-
-      <form onSubmit={handleSubmit} className="max-w-xl mx-auto space-y-6">
-        <Input name="clientName" placeholder="Your Full Name" required />
-        <div className="flex gap-4">
-          <Input name="carMake" placeholder="Car Make" required />
-          <Input name="carModel" placeholder="Car Model" required />
-          <Input name="carYear" type="number" placeholder="Year" required />
-        </div>
+    <div className="container grid grid-cols-1 md:grid-cols-3 gap-8 py-12">
+      {/* --- Main Selection Area --- */}
+      <div className="md:col-span-2 space-y-8">
         <div>
-          <h3 className="font-semibold mb-2">Select Services:</h3>
-          <div className="space-y-2">
-
-            {orgData.services.map((service: { _id: string; name: string; price: number }) => (
-              <div key={String(service._id)} className="flex items-center gap-2">
-                <Checkbox id={String(service._id)} name="serviceIds" value={String(service._id)} />
-                <label htmlFor={String(service._id)}>{service.name} (${service.price})</label>
+          <h2 className="text-2xl font-bold">1. Select Your Main Service</h2>
+          <div className="space-y-2 mt-4">
+            {baseServices?.map(service => (
+              <div key={service._id} className="flex items-center gap-2">
+                <Checkbox
+                  id={service._id}
+                  checked={selectedServices.includes(service._id)}
+                  onCheckedChange={() => handleServiceChange(service._id)}
+                />
+                <label htmlFor={service._id} className="cursor-pointer">
+                  {service.name} - ${service.basePrice.toFixed(2)}
+                  <p className="text-sm text-muted-foreground">{service.description}</p>
+                </label>
               </div>
             ))}
           </div>
         </div>
-        <Textarea name="notes" placeholder="Any additional notes about your vehicle's condition?" />
-        <Button type="submit" className="w-full">Submit Assessment</Button>
-      </form>
+        <div>
+          <h2 className="text-2xl font-bold">2. Vehicle Condition</h2>
+           <div className="space-y-2 mt-4">
+            {orgData.modifiers?.map(modifier => (
+              <div key={modifier._id} className="flex items-center gap-2">
+                <Checkbox
+                  id={modifier._id}
+                  checked={selectedModifiers.includes(modifier._id)}
+                  onCheckedChange={() => handleModifierChange(modifier._id)}
+                />
+                <label htmlFor={modifier._id} className="cursor-pointer">
+                  {modifier.name} - ${modifier.price.toFixed(2)}
+                  <p className="text-sm text-muted-foreground">{modifier.description}</p>
+                </label>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div>
+          <h2 className="text-2xl font-bold">3. Choose Add-Ons</h2>
+          <div className="space-y-2 mt-4">
+            {addOnServices?.map(service => (
+              <div key={service._id} className="flex items-center gap-2">
+                <Checkbox
+                  id={service._id}
+                  checked={selectedServices.includes(service._id)}
+                  onCheckedChange={() => handleServiceChange(service._id)}
+                />
+                <label htmlFor={service._id} className="cursor-pointer">
+                  {service.name} - ${service.basePrice.toFixed(2)}
+                  <p className="text-sm text-muted-foreground">{service.description}</p>
+                </label>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* --- Real-Time Estimate Sidebar --- */}
+      <div className="md:col-span-1">
+        <Card className="sticky top-8">
+          <CardContent className="p-6">
+            <h3 className="text-lg font-bold mb-4">Live Estimate</h3>
+            {estimate ? (
+              <div className="space-y-2">
+                {estimate.lineItems.map((item, i) => (
+                  <div key={i} className="flex justify-between">
+                    <span>{item.name}</span>
+                    <span>${item.price.toFixed(2)}</span>
+                  </div>
+                ))}
+                <hr className="my-2" />
+                <div className="flex justify-between font-semibold">
+                  <span>Subtotal</span>
+                  <span>${estimate.subtotal.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>Tax</span>
+                  <span>${estimate.tax.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-xl font-bold mt-2">
+                  <span>Total</span>
+                  <span>${estimate.total.toFixed(2)}</span>
+                </div>
+              </div>
+            ) : (
+              <p>Select a service to begin.</p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
