@@ -9,6 +9,17 @@ export const calculate = query({
     serviceIds: v.array(v.id("services")),
     modifierIds: v.array(v.id("modifiers")),
   },
+  returns: v.object({
+    lineItems: v.array(v.object({
+      type: v.string(),
+      name: v.string(),
+      price: v.number()
+    })),
+    subtotal: v.number(),
+    discount: v.number(),
+    tax: v.number(),
+    total: v.number()
+  }),
   handler: async (ctx, args) => {
     const lineItems: { type: string; name: string; price: number }[] = [];
     let subtotal = 0;
