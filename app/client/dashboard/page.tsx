@@ -20,6 +20,16 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 
+/**
+ * Dashboard page that lists the current user's vehicle assessments.
+ *
+ * Fetches assessments for the signed-in user and renders them in a table showing:
+ * - Vehicle (year, make, model)
+ * - Service (the first line item with `type === "service"`, or `"Unknown"` if none)
+ * - Status (renders a Badge; `'pending'` uses the default variant, all other statuses use the secondary variant)
+ *
+ * @returns A JSX element containing the assessments table wrapped in a Card.
+ */
 export default function DashboardPage() {
     const assessments = useQuery(api.assessments.getMyAssessments);
 
