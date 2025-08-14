@@ -1,8 +1,6 @@
 // components/header.tsx
 'use client';
 
-import { useRouter, useParams } from "next/navigation";
-
 import {
     OrganizationSwitcher,
     SignedIn,

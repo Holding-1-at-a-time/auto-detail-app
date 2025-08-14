@@ -6,12 +6,14 @@
     "Donts",
     "Graphene",
     "Ints",
+    "navigations",
     "orgslug",
     "qrcode",
     "Steph",
     "svix",
     "tablename",
-    "typesafe"
+    "typesafe",
+    "Uncategorized"
   ],
   "codium.codeCompletion.enable": true
 }

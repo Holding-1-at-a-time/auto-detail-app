@@ -75,10 +75,10 @@ export default function AssessmentDetailsPage() {
                 <TableCell>Tax</TableCell>
                 <TableCell className="text-right">${assessment.tax.toFixed(2)}</TableCell>
               </TableRow>
-              {assessment.discount > 0 && (
+              {(assessment?.discount ?? false) && (
                 <TableRow>
-                  <TableCell>Discount</TableCell> {/* Ensure discount is not undefined before calling toFixed */}
-                  <TableCell className="text-right">-${assessment.discount.toFixed(2)}</TableCell>
+                  <TableCell>Discount</TableCell>
+                  <TableCell className="text-right">-${(assessment?.discount ?? 0).toFixed(2)}</TableCell>
                 </TableRow>
               )}
               <TableRow className="text-xl font-bold">

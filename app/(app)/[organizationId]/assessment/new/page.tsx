@@ -44,7 +44,18 @@ import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 
-// Form values are inferred from the Zod schema defined below to keep types in sync.
+// Strongly typed form values without unsafe casts
+export type FormValues = {
+  clientName: string;
+  clientEmail?: string;
+  clientPhone?: string;
+  clientId?: string; // Will hold Id<"clients"> as string from selection
+  carMake: string;
+  carModel: string;
+  carYear: number;
+  serviceId: string; // Will hold Id<"services"> as string from selection
+  notes?: string;
+};
 
 // Form schema with strong validation and correct coercion/normalization
 const formSchema = z.object({
@@ -69,9 +80,6 @@ const formSchema = z.object({
   notes: z.string().optional(),
 });
 
-// Strongly typed form values inferred from schema
-export type FormValues = z.infer<typeof formSchema>;
-
 /**
  * Page for creating a new vehicle assessment.
  *
@@ -92,7 +100,7 @@ export default function NewAssessmentPage() {
   // Load services for current org and set up client search state
   const services = useQuery(
     api.services.getServicesForCurrentOrg,
-    orgDoc?._id ? { orgId: orgDoc._id } : undefined
+    orgDoc?._id ? { orgId: orgDoc._id } : "skip"
   );
 
   const [searchClientName, setSearchClientName] = useState("");
@@ -109,7 +117,7 @@ export default function NewAssessmentPage() {
     api.clients.searchByName,
     debouncedSearchClientName.length >= 2 && orgDoc?._id
       ? { name: debouncedSearchClientName, orgId: orgDoc._id }
-      : undefined
+      : "skip"
   );
 
   const serviceOptions = useMemo(
@@ -119,7 +127,7 @@ export default function NewAssessmentPage() {
 
   const form = useForm<FormValues>({
 
-    resolver: zodResolver<FormValues>(formSchema),
+    resolver: zodResolver(formSchema),
     defaultValues: {
       clientName: "",
       clientEmail: "",
@@ -199,8 +207,6 @@ export default function NewAssessmentPage() {
           Sentry.captureException(err);
           const message = err instanceof Error ? err.message : "Unknown error";
           toast.error(`Failed to create assessment: ${message}`);
-          // eslint-disable-next-line no-console
-          console.error("Failed to create assessment:", err);
         } finally {
           setIsSubmitting(false);
         }

@@ -16,17 +16,17 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { api } from "@/convex/_generated/api";
 import { useQuery } from "convex/react";
+import type { Doc } from "@/convex/_generated/dataModel";
+import { api } from "@/convex/_generated/api";
 
 /**
  * Dashboard page showing a list of assessments and their statuses.
  */
 export default function DashboardPage() {
     const assessments = useQuery(api.assessments.getMyAssessments);
-    const services = useQuery(api.services.getAllServices);
 
-    if (assessments === undefined || services === undefined) {
+    if (assessments === undefined) {
         return <div>Loading assessments...</div>;
     }
 
@@ -48,11 +48,9 @@ export default function DashboardPage() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {assessments.map((assessment) => {
+                        {assessments?.map((assessment: Doc<"assessments">) => {
                             const serviceName =
-                                services.find(
-                                    (service: { _id: string }) => service._id === assessment.serviceId
-                                )?.name || assessment.serviceId;
+                                assessment.lineItems.find((li) => li.type === "service")?.name ?? "Unknown";
 
                             return (
                                 <TableRow key={assessment._id}>

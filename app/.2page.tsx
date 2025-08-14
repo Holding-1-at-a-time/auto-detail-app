@@ -4,7 +4,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Car, ShieldCheck, Sparkles, Wand2, Star, CheckCircle } from "lucide-react";
+import { Car, ShieldCheck, Sparkles, Wand2, Star } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 
@@ -26,7 +26,7 @@ export default function HomePage() {
                             Experience the pinnacle of auto detailing. Our modern assessment process provides a transparent, no-hassle quote for your vehicle in minutes.
                         </p>
                         <Button size="lg" className="animate-glow rounded-full text-lg px-8 py-6" asChild>
-                            <Link href="/assessment/new">Reveal Your Car's Potential</Link>
+                            <Link href="/assessment/new">Reveal Your Car&apos;s Potential</Link>
                         </Button>
                     </motion.div>
                 </div>
@@ -49,13 +49,13 @@ export default function HomePage() {
                             { icon: Car, title: "Flawless Exterior Wash", desc: "Gentle hand wash, decontamination, and sealant for a durable, glossy finish." },
                             { icon: Wand2, title: "Gloss Paint Correction", desc: "Multi-stage polishing to eliminate swirls and scratches, revealing true paint depth." },
                             { icon: ShieldCheck, title: "Graphene Ceramic Coating", desc: "The ultimate in long-term protection, providing unmatched gloss and hydrophobicity." },
-                        ].map((service, index) => (
+                        ].map((service, i) => (
                             <motion.div
                                 key={service.title}
                                 initial={{ opacity: 0, y: 20 }}
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true }}
-                                transition={{ duration: 0.5, delay: index * 0.1 }}
+                                transition={{ duration: 0.5, delay: i * 0.1 }}
                                 className="group relative"
                             >
                                 <Card className="h-full bg-background/50 border-border/50 backdrop-blur-sm transition-all duration-300 hover:border-primary">
@@ -87,7 +87,7 @@ export default function HomePage() {
                             { step: 1, title: "Submit Online", desc: "Fill our intuitive form with your vehicle's details." },
                             { step: 2, title: "Receive Quote", desc: "We review and send a detailed, transparent quote." },
                             { step: 3, title: "Schedule & Shine", desc: "Approve and book your service. We handle the rest." },
-                        ].map((item, index) => (
+                        ].map((item) => (
                             <div key={item.step} className="relative z-10 flex flex-col items-center text-center p-4 w-full md:w-1/3">
                                 <div className="flex items-center justify-center w-16 h-16 rounded-full bg-background border-2 border-primary text-primary font-bold text-2xl mb-4">
                                     {item.step}
@@ -141,12 +141,12 @@ export default function HomePage() {
                             <AccordionContent>Yes, all services are performed at our secure, fully-equipped facility to ensure the highest quality results in a controlled environment.</AccordionContent>
                         </AccordionItem>
                         <AccordionItem value="item-3">
-                            <AccordionTrigger>What's the benefit of a ceramic coating?</AccordionTrigger>
+                            <AccordionTrigger>What&apos;s the benefit of a ceramic coating?</AccordionTrigger>
                             <AccordionContent>Ceramic coatings provide a hard, sacrificial layer of protection against minor scratches, UV rays, and chemical contaminants. It also offers incredible gloss and makes cleaning your vehicle significantly easier.</AccordionContent>
                         </AccordionItem>
                         <AccordionItem value="item-4">
                             <AccordionTrigger>How is my quote determined?</AccordionTrigger>
-                            <AccordionContent>Our quotes are based on your vehicle's size, its current condition, and the specific services you select. Our online assessment helps us provide a fair and accurate estimate upfront.</AccordionContent>
+                            <AccordionContent>Our quotes are based on your vehicle&apos;s size, its current condition, and the specific services you select. Our online assessment helps us provide a fair and accurate estimate upfront.</AccordionContent>
                         </AccordionItem>
                     </Accordion>
                 </div>

@@ -20,3 +20,5 @@ Sentry.init({
 
 // Optional: expose a typed logger import path if desired
 export const { logger } = Sentry;
+
+export const onRouterTransitionStart = Sentry.captureRouterTransitionStart
