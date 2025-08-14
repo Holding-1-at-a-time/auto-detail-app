@@ -6,7 +6,6 @@ import { ClerkProvider } from "@clerk/nextjs";
 import Header from "@/components/nav/Header";
 import { Toaster } from "@/components/ui/sonner"; // Import from the new location
 import { dark } from "@clerk/themes";
-import { AppNav } from "@/components/AppNave";
 
 
 
@@ -90,8 +89,6 @@ export default function RootLayout({
           }}
         >
           <Header />
-          <AppNav />
-
           <ConvexClientProvider>{children}</ConvexClientProvider>
           <Toaster richColors />
         </ClerkProvider>

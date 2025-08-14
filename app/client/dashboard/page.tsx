@@ -42,7 +42,7 @@ export default function DashboardPage() {
                         {assessments?.map((assessment) => (
                             <TableRow key={assessment._id}>
                                 <TableCell className="font-medium">{assessment.carYear} {assessment.carMake} {assessment.carModel}</TableCell>
-                                <TableCell>{assessment.serviceId}</TableCell>
+                                <TableCell>{assessment.serviceName ?? "Unknown Service"}</TableCell>
                                 <TableCell className="text-right">
                                     <Badge variant={assessment.status === 'pending' ? 'default' : 'secondary'}>
                                         {assessment.status}

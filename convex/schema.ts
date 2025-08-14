@@ -53,6 +53,7 @@ export default defineSchema({
       v.literal("reviewed"),
       v.literal("complete")
     ),
+    serviceName: v.string(),
 
     // NEW estimate fields
     lineItems: v.array(

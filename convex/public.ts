@@ -131,7 +131,8 @@ export const publicCreateAssessment = mutation({
         clientEmail: "",
         subtotal: 0,
         tax: 0,
-        total: 0
+        total: 0,
+        serviceName: ""
       });
     } catch (e) {
       console.error("Error creating assessment:", e);

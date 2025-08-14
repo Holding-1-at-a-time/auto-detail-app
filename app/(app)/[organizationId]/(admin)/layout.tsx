@@ -1,5 +1,6 @@
 // app/(admin)/layout.tsx
 import React from "react";
+import { AppNav } from "components/AppNave";
 
 // This layout will ONLY apply to routes inside the (admin) group
 export default function AdminLayout({
@@ -16,6 +17,7 @@ export default function AdminLayout({
                     </p>
                 </div>
             </div>
+            <AppNav />
             <main>{children}</main>
         </div>
     );

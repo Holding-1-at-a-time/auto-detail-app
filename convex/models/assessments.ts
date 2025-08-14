@@ -136,12 +136,15 @@ export async function createAssessmentModel(
     status: "pending",
     // Initialize new fields from schema.ts
     clientEmail: args.client.email ?? "", // Default to empty string if not provided
+    serviceName: service.name,
     lineItems: [{ type: "service", name: service.name, price: service.basePrice }], // Add the selected service as a line item
     subtotal: service.basePrice,
     discount: 0, // Default discount to 0
     tax: 0, // Default tax to 0, can be calculated later
     carColor: args.carColor ?? "string", // Add carColor here
-    total: service.basePrice, // Initial total is just the service price
+    total: service.basePrice,
+
+
   });
 }
 // Delete an assessment by Id

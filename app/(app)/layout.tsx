@@ -8,7 +8,6 @@ export default function AppLayout({
 }) {
     return (
         <>
-            <Header />
             <div className="flex">
                 <AppNav />
                 <main className="flex-1 p-8">{children}</main>
