@@ -102,7 +102,7 @@ export default function PublicBookingPage({ params }: PublicBookingPageProps) {
             {orgData.services.map((service) => (
               <div key={String(service._id)} className="flex items-center gap-2">
                 <Checkbox id={String(service._id)} name="serviceIds" value={String(service._id)} />
-                <label htmlFor={String(service._id)}>{service.name} (${service.price})</label>
+                <label htmlFor={String(service._id)}>{service.name} (${service.basePrice})</label>
               </div>
             ))}
           </div>

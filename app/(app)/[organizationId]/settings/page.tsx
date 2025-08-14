@@ -41,10 +41,15 @@ function ManageServicesCard() {
 
       try {
         await createService({
-          orgId,
-          userId,
+          orgId: orgDoc._id,
           name,
-          price,
+          description: '',
+          basePrice: price,
+          type: 'base',
+          durationMinutes: 0,
+          category: '',
+          isActive: true,
+          imageUrl: '',
         });
         toast.success("New service has been added.");
         event.currentTarget.reset();
@@ -82,7 +87,7 @@ function ManageServicesCard() {
                         {services?.map((service) => (
                             <TableRow key={service._id}>
                                 <TableCell className="font-medium">{service.name}</TableCell>
-                                <TableCell className="text-right">${service.price.toFixed(2)}</TableCell>
+                                <TableCell className="text-right">${service.basePrice.toFixed(2)}</TableCell>
                             </TableRow>
                         ))}
                     </TableBody>

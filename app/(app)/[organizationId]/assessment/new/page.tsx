@@ -1,16 +1,31 @@
 "use client";
 
-import { useForm, SubmitHandler } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useOrganization } from "@clerk/nextjs";
-import { useEffect, useMemo, useState } from "react";
-import { toast } from "sonner";
+import { zodResolver } from "@hookform/resolvers/zod";
 import * as Sentry from "@sentry/nextjs";
+import { useMutation, useQuery } from "convex/react";
+import { useEffect, useMemo, useState } from "react";
+import { SubmitHandler, useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Combobox } from "@/components/ui/combobox";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import {
   Form,
   FormControl,
@@ -21,30 +36,15 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { useRouter } from "next/navigation";
 import { Id } from "@/convex/_generated/dataModel";
-import { Combobox } from "@/components/ui/combobox";
-import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
-import {
-  Command,
-  CommandList,
-  CommandEmpty,
-  CommandGroup,
-  CommandItem,
-} from "@/components/ui/command";
-import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Check } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 
-// Strongly typed form values without unsafe casts
+// Strongly typed form values without unsafe casts 
 export type FormValues = {
   clientName: string;
   clientEmail?: string;
@@ -59,24 +59,13 @@ export type FormValues = {
 
 // Form schema with strong validation and correct coercion/normalization
 const formSchema = z.object({
-  clientName: z.string().min(2, "Name must be at least 2 characters."),
-  clientEmail: z
-    .string()
-    .trim()
-    .email("Invalid email address.")
-    .optional()
-    .transform((v) => (v === "" ? undefined : v)),
+  clientName: z.string(),
+  clientEmail: z.string().email().optional(),
   clientPhone: z.string().optional(),
-  clientId: z.string().optional(),
-  carMake: z.string().min(2, "Make is required."),
-  carModel: z.string().min(2, "Model is required."),
-  carYear: z
-    .coerce
-    .number()
-    .int("Year must be an integer")
-    .min(1900, "Year must be 1900 or later")
-    .max(new Date().getFullYear() + 1, "Year cannot be in the future beyond next year"),
-  serviceId: z.string().min(1, "You must select a service."),
+  carMake: z.string(),
+  carModel: z.string(),
+  carYear: z.number(),
+  serviceId: z.string(),
   notes: z.string().optional(),
 });
 
@@ -126,27 +115,19 @@ export default function NewAssessmentPage() {
   );
 
   const form = useForm<FormValues>({
-
     resolver: zodResolver(formSchema),
     defaultValues: {
       clientName: "",
       clientEmail: "",
       clientPhone: "",
-      clientId: undefined,
       carMake: "",
       carModel: "",
       carYear: new Date().getFullYear(),
       serviceId: "",
       notes: "",
-    },
+    }
   });
 
-  /**
-   * Handles form submission by calling the createAssessment mutation.
-   * If the mutation is successful, resets the form and redirects to the
-   * dashboard page for the organization. If the mutation fails, displays
-   * an error message to the user and logs the error to the console.
-   */
   const onSubmit: SubmitHandler<FormValues> = async (values) => {
     if (!orgDoc?._id || !currentUser?._id) {
       toast.error("Organization and user must be identified to create an assessment.");
@@ -304,7 +285,7 @@ export default function NewAssessmentPage() {
                 </PopoverContent>
               </Popover>
 
-              <FormField
+              <FormField<FormValues>
                 control={form.control}
                 name="clientEmail"
                 render={({ field }) => (
@@ -390,7 +371,7 @@ export default function NewAssessmentPage() {
 
             {/* Service Selection */}
             <div className="space-y-4 p-4 border rounded-md">
-              <FormField
+              <FormField<FormValues>
                 control={form.control}
                 name="serviceId"
                 render={({ field }) => (
@@ -402,8 +383,8 @@ export default function NewAssessmentPage() {
                     <FormControl>
                       <Combobox
                         options={serviceOptions}
-                        value={field.value ?? ""}
-                        onChange={(val) => field.onChange(val ?? "")}
+                        value={typeof field.value === "string" ? field.value : field.value?.toString() ?? ""}
+                        onChange={(val) => field.onChange(val)}
                         placeholder={
                           services === undefined
                             ? "Loading services..."
