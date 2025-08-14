@@ -1,19 +1,20 @@
 // convex/services.ts
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
-import type { Id } from './_generated/dataModel';
+import type { Id } from "./_generated/dataModel";
 
-// Mutation to create a new service
+// NOTE: This file has been updated to align with the new service management UI.
+// The mutations now derive the organization ID from the user's authentication
+// token rather than requiring it as an explicit argument.
+
+/**
+ * Create a new service for the user's organization.
+ */
 export const createService = mutation({
   args: {
-    orgId: v.id("organizations"),
     name: v.string(),
     description: v.string(),
     basePrice: v.number(),
-    category: v.optional(v.string()),
-    durationMinutes: v.optional(v.number()),
-    isActive: v.optional(v.boolean()),
-    imageUrl: v.optional(v.string()),
     type: v.union(v.literal("base"), v.literal("add_on")),
   },
   handler: async (ctx, args) => {
@@ -22,86 +23,106 @@ export const createService = mutation({
       throw new Error("You must be logged in to create a service.");
     }
 
-    // Organization membership validation can be added here if needed,
-    // by checking identity.orgMemberships.
+    // orgId is expected to be in the Clerk JWT token.
+    const orgId = (identity as any).orgId;
+    if (!orgId) {
+      throw new Error("You must be part of an organization to create a service.");
+    }
 
     return await ctx.db.insert("services", {
-      orgId: args.orgId,
-      name: args.name,
-      basePrice: args.basePrice,
-      type: args.type,
-      description: args.description ?? "",
-      category: args.category ?? "Uncategorized",
-      durationMinutes: args.durationMinutes ?? 0,
-      isActive: args.isActive ?? true,
-      imageUrl: args.imageUrl ?? "",
+      ...args,
+      orgId: orgId as Id<"organizations">,
+      // Provide defaults for fields not present in the new form
+      category: "Uncategorized",
+      durationMinutes: 0,
+      isActive: true,
+      imageUrl: "",
     });
   },
 });
 
-// Get all services
-export const getAllServices = query({
-  args: {},
+/**
+ * Get all services for the user's current organization.
+ */
+export const getServicesForCurrentOrg = query({
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
       return [];
     }
 
-    return ctx.db
-      .query("services")
-      .withIndex("by_orgId", (q) => q.eq("orgId", identity.orgId as Id<"organizations">))
-      .collect();
-  },
-});
-
-export const getServicesForCurrentOrg = query({
-  args: {
-    orgId: v.id("organizations"),
-  },
-  handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
+    // orgId is expected to be in the Clerk JWT token.
+    const orgId = (identity as any).orgId;
+    if (!orgId) {
       return [];
     }
 
-    return ctx.db
+    return await ctx.db
       .query("services")
-      .withIndex("by_orgId", (q) => q.eq("orgId", args.orgId))
+      .withIndex("by_orgId", (q) => q.eq("orgId", orgId as Id<"organizations">))
       .collect();
-  }
+  },
 });
 
-// Update a service's details
+/**
+ * Update an existing service.
+ */
 export const updateService = mutation({
   args: {
     serviceId: v.id("services"),
-    name: v.optional(v.string()),
-    price: v.optional(v.number()),
+    name: v.string(),
+    description: v.string(),
+    basePrice: v.number(),
+    type: v.union(v.literal("base"), v.literal("add_on")),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
-      throw new Error("You must be logged in to update a service.");
+      throw new Error("You are not authorized to perform this action.");
+    }
+
+    const orgId = (identity as any).orgId;
+    if (!orgId) {
+      throw new Error("You must be part of an organization to update a service.");
     }
 
     const { serviceId, ...rest } = args;
 
+    const existingService = await ctx.db.get(serviceId);
+    if (!existingService || existingService.orgId !== orgId) {
+      throw new Error("You are not authorized to edit this service.");
+    }
+
     await ctx.db.patch(serviceId, rest);
+    return { success: true };
   },
 });
 
-// Delete a service
+/**
+ * Delete a service.
+ */
 export const deleteService = mutation({
-  args: {
-    serviceId: v.id("services"),
-  },
+  args: { serviceId: v.id("services") },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
-      throw new Error("You must be logged in to delete a service.");
+      throw new Error("You are not authorized to perform this action.");
     }
 
+    const orgId = (identity as any).orgId;
+    if (!orgId) {
+      throw new Error("You must be part of an organization to delete a service.");
+    }
+
+    const existingService = await ctx.db.get(args.serviceId);
+    if (!existingService || existingService.orgId !== orgId) {
+      throw new Error("You are not authorized to delete this service.");
+    }
+
+    // TODO: Add logic here to handle assessments that might be using this service
+    // For now, we will delete it directly.
+
     await ctx.db.delete(args.serviceId);
+    return { success: true };
   },
 });

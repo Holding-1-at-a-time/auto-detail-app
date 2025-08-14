@@ -1,165 +1,152 @@
 // app/(app)/[organizationId]/settings/page.tsx
-'use client';
+"use client";
 
-import { useMutation, useQuery } from 'convex/react';
-import { api } from '@/convex/_generated/api';
-import { useOrganization, Protect } from '@clerk/nextjs';
-import { QRCodeSVG } from 'qrcode.react';
-import { useRef, useState } from 'react';
-import { toast } from "sonner"; // <-- Import toast from Sonner
+import { useState } from "react";
+import { useMutation, useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import { Doc } from "@/convex/_generated/dataModel";
+import { Protect } from "@clerk/nextjs";
+import { toast } from "sonner";
+import { MoreHorizontal, PlusCircle } from "lucide-react";
 
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-
-
-function ManageServicesCard() {
-    const orgDoc = useQuery(api.organizations.getOrganization);
-    const currentUser = useQuery(api.users.getCurrentUser);
-    const services = useQuery(
-        api.services.getServicesForCurrentOrg,
-        orgDoc?._id ? { orgId: orgDoc._id } : "skip"
-    );
-    const createService = useMutation(api.services.createService);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-
-    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-      event.preventDefault();
-      setIsSubmitting(true);
-      const formData = new FormData(event.currentTarget);
-      const name = formData.get('name') as string;
-      const price = Number(formData.get('price'));
-      const orgId = orgDoc?._id;
-      const userId = currentUser?._id;
-
-      if (!orgId || !userId) {
-        toast.error("Organization or user ID is missing.");
-        setIsSubmitting(false);
-        return;
-      }
-
-      try {
-        await createService({
-          orgId: orgDoc._id,
-          name,
-          description: '',
-          basePrice: price,
-          type: 'base',
-          durationMinutes: 0,
-          category: '',
-          isActive: true,
-          imageUrl: '',
-        });
-        toast.success("New service has been added.");
-        event.currentTarget.reset();
-      } catch (error) {
-        toast.error("Failed to add the service.");
-        console.error(error);
-      } finally {
-        setIsSubmitting(false);
-      }
-    };
-
-    return (
-        <Card>
-            <CardHeader>
-                <CardTitle>Manage Services</CardTitle>
-                <CardDescription>Add or edit the services your business offers.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <form onSubmit={handleSubmit} className="flex flex-col md:flex-row gap-4 mb-8">
-                    <Input name="name" placeholder="Service Name (e.g., Interior Detail)" required />
-                    <Input name="price" type="number" placeholder="Price" step="0.01" required />
-                    <Button type="submit" disabled={isSubmitting}>
-                        {isSubmitting ? 'Adding...' : 'Add Service'}
-                    </Button>
-                </form>
-
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Service Name</TableHead>
-                            <TableHead className="text-right">Price</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {services?.map((service) => (
-                            <TableRow key={service._id}>
-                                <TableCell className="font-medium">{service.name}</TableCell>
-                                <TableCell className="text-right">${service.basePrice.toFixed(2)}</TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </CardContent>
-        </Card>
-    );
-}
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { ServiceForm } from "./_components/service-form"; // We will create this next
 
 /**
- * Renders a card displaying the unique booking link and QR code for the organization.
+ * Renders the actions dropdown for each service in the table.
  */
-function BookingLinkCard() {
-    const { organization } = useOrganization();
-    const qrCodeRef = useRef<HTMLDivElement>(null);
+function ServiceActions({ service }: { service: Doc<"services"> }) {
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const deleteService = useMutation(api.services.deleteService);
 
-    if (!organization) {
-      return null;
-    }
+  const handleDelete = () => {
+    deleteService({ serviceId: service._id })
+      .then(() => toast.success(`${service.name} has been deleted.`))
+      .catch(() => toast.error("Failed to delete service."));
+  };
 
-    const bookingUrl = `${window.location.origin}/book/${organization.slug}`;
-
-    // ... (keep the existing downloadQRCode function)
-
-    return (
-        <Card className="mt-8">
-            <CardHeader>
-                <CardTitle>Your Public Booking Link</CardTitle>
-                <CardDescription>
-                    Share this QR code or link with your clients to have them book a service.
-                </CardDescription>
-            </CardHeader>
-            <CardContent>
-                <div className="flex flex-col md:flex-row gap-8 items-center">
-                    <div ref={qrCodeRef} className="p-4 bg-white rounded-lg">
-                        <QRCodeSVG value={bookingUrl} size={128} />
-                    </div>
-                    <div className="flex-grow w-full">
-                        <Input readOnly value={bookingUrl} className="mb-2" />
-                        <div className="flex gap-2">
-                            <Button
-                                onClick={() => {
-                                    navigator.clipboard.writeText(bookingUrl);
-                                    toast.success("Copied to clipboard!"); // <-- Use Sonner
-                                }}
-                            >
-                                Copy Link
-                            </Button>
-                            {/* ... (download button) ... */}
-                        </div>
-                    </div>
-                </div>
-            </CardContent>
-        </Card>
-    );
+  return (
+    <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="h-8 w-8 p-0">
+            <span className="sr-only">Open menu</span>
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => setIsEditDialogOpen(true)}>
+            Edit
+          </DropdownMenuItem>
+          <DropdownMenuItem className="text-red-500" onClick={handleDelete}>
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Edit Service</DialogTitle>
+        </DialogHeader>
+        <ServiceForm
+          service={service}
+          onClose={() => setIsEditDialogOpen(false)}
+        />
+      </DialogContent>
+    </Dialog>
+  );
 }
 
 /**
  * Main settings page, protected to be accessible only by organization admins.
  */
 export default function SettingsPage() {
-    return (
-        <div className="space-y-8">
-            <div>
-                <h1 className="text-3xl font-bold">Business Settings</h1>
-                <p className="text-muted-foreground">Manage your organization's services and public booking information.</p>
-            </div>
+  const services = useQuery(api.services.getServicesForCurrentOrg);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
-            <Protect role="org:admin" fallback={<p>You do not have permission to view this page.</p>}>
-                <ManageServicesCard />
-                <BookingLinkCard />
-            </Protect>
-        </div>
-    );
+  return (
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-3xl font-bold">Business Settings</h1>
+        <p className="text-muted-foreground">
+          Manage your organization&apos;s services and public booking information.
+        </p>
+      </div>
+
+      <Protect
+        role="org:admin"
+        fallback={<p>You do not have permission to view this page.</p>}
+      >
+        <Card>
+          <CardHeader>
+            <CardTitle>Manage Services</CardTitle>
+            <CardDescription>
+              The services your business offers to clients.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex justify-end mb-4">
+              <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <PlusCircle className="mr-2 h-4 w-4" /> Add New Service
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Add a New Service</DialogTitle>
+                  </DialogHeader>
+                  <ServiceForm onClose={() => setIsCreateDialogOpen(false)} />
+                </DialogContent>
+              </Dialog>
+            </div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Base Price</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {services?.map((service) => (
+                  <TableRow key={service._id}>
+                    <TableCell className="font-medium">{service.name}</TableCell>
+                    <TableCell className="capitalize">{service.type}</TableCell>
+                    <TableCell>${service.basePrice.toFixed(2)}</TableCell>
+                    <TableCell className="text-right">
+                      <ServiceActions service={service} />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+        {/* We can add the BookingLinkCard here later */}
+      </Protect>
+    </div>
+  );
 }
