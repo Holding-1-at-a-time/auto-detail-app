@@ -79,7 +79,12 @@ function ServiceActions({ service }: { service: Doc<"services"> }) {
 }
 
 /**
- * Main settings page, protected to be accessible only by organization admins.
+ * Settings page for managing an organization's services; access restricted to org admins.
+ *
+ * Renders a card with a table of services (Name, Type, Base Price) fetched for the current organization.
+ * Provides a dialog to create a new service and per-service actions (edit/delete) via the ServiceActions
+ * component; creation and editing use the shared ServiceForm. Wrapped in Protect with role "org:admin"
+ * — when the current user lacks that role a permission message is shown instead.
  */
 export default function SettingsPage() {
   const services = useQuery(api.services.getServicesForCurrentOrg);

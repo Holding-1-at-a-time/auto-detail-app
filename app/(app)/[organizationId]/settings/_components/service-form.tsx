@@ -23,6 +23,18 @@ interface ServiceFormProps {
   onClose: () => void;
 }
 
+/**
+ * Form component for creating a new service or editing an existing one.
+ *
+ * Renders inputs for name, description, base price, and type, and submits collected values
+ * to the appropriate Convex mutation (create or update). Shows success/error toasts,
+ * disables the submit button while the operation is pending, and invokes `onClose` after
+ * a successful save or when the user cancels.
+ *
+ * @param service - Optional existing service document; when provided the form is initialized for editing.
+ * @param onClose - Callback invoked to close the form (called after successful save or when cancelling).
+ * @returns A JSX element containing the service form.
+ */
 export function ServiceForm({ service, onClose }: ServiceFormProps) {
   const createService = useMutation(api.services.createService);
   const updateService = useMutation(api.services.updateService);
