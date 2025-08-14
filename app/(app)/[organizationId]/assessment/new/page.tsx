@@ -87,10 +87,8 @@ export default function NewAssessmentPage() {
   const currentUser = useQuery(api.users.getCurrentUser);
 
   // Load services for current org and set up client search state
-  const services = useQuery(
-    api.services.getServicesForCurrentOrg,
-    orgDoc?._id ? { orgId: orgDoc._id } : "skip"
-  );
+  // Best practice: Only call useQuery when orgDoc is loaded and _id is present, otherwise pass undefined to skip
+  const services = useQuery(api.services.getServicesForCurrentOrg, undefined)
 
   const [searchClientName, setSearchClientName] = useState("");
   const [debouncedSearchClientName, setDebouncedSearchClientName] = useState("");

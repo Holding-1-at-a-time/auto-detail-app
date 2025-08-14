@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useState } from "react";
 
 interface ServiceFormProps {
   service?: Doc<"services">; // Optional service prop for editing
@@ -26,7 +27,8 @@ export function ServiceForm({ service, onClose }: ServiceFormProps) {
   const createService = useMutation(api.services.createService);
   const updateService = useMutation(api.services.updateService);
   const mutation = service ? updateService : createService;
-  const isPending = mutation.isPending;
+  const [pending, setPending] = useState(false);
+  // For form submission, we'll manage a local loading state.
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -38,18 +40,21 @@ export function ServiceForm({ service, onClose }: ServiceFormProps) {
       type: formData.get("type") as "base" | "add_on",
     };
 
-    const promise = service
-      ? updateService({ serviceId: service._id, ...data })
-      : createService(data);
-
-    promise
-      .then(() => {
-        toast.success(`Service ${service ? "updated" : "created"} successfully.`);
-        onClose();
-      })
-      .catch(() => {
-        toast.error(`Failed to ${service ? "update" : "create"} service.`);
-      });
+    setPending(true);
+    try {
+      if (service) {
+        await updateService({ serviceId: service._id, ...data });
+        toast.success(`Service updated successfully.`);
+      } else {
+        await createService(data);
+        toast.success(`Service created successfully.`);
+      }
+      onClose();
+    } catch (error) {
+      toast.error(`Failed to ${service ? "update" : "create"} service.`);
+    } finally {
+      setPending(false);
+    }
   };
 
   return (
@@ -70,8 +75,8 @@ export function ServiceForm({ service, onClose }: ServiceFormProps) {
         <Button type="button" variant="ghost" onClick={onClose}>
           Cancel
         </Button>
-        <Button type="submit" disabled={isPending}>
-          {isPending ? "Saving..." : "Save Service"}
+        <Button type="submit" disabled={pending}>
+          {pending ? "Saving..." : "Save Service"}
         </Button>
       </div>
     </form>
