@@ -119,16 +119,19 @@ export const publicCreateAssessment = mutation({
 
       return await ctx.db.insert("assessments", {
         orgId: args.orgId,
-        userId: args.userId,
         clientId: client._id,
         clientName: args.clientName,
         carMake: args.carMake,
         carModel: args.carModel,
         carYear: args.carYear,
         carColor: args.carColor ?? "Unknown",
-        serviceId: args.serviceId, // Changed from serviceId to serviceId
+        lineItems: [{ type: "service", name: "Publicly Booked Service", price: 0 }], // Placeholder, actual service details would be fetched
         notes: args.notes,
         status: "pending",
+        clientEmail: "",
+        subtotal: 0,
+        tax: 0,
+        total: 0
       });
     } catch (e) {
       console.error("Error creating assessment:", e);

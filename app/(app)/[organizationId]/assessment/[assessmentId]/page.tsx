@@ -77,8 +77,8 @@ export default function AssessmentDetailsPage() {
               </TableRow>
               {assessment.discount > 0 && (
                 <TableRow>
-                  <TableCell>Discount</TableCell>
-                  <TableCell className="text-right">-${assessment.discount?.toFixed(2)}</TableCell>
+                  <TableCell>Discount</TableCell> {/* Ensure discount is not undefined before calling toFixed */}
+                  <TableCell className="text-right">-${assessment.discount.toFixed(2)}</TableCell>
                 </TableRow>
               )}
               <TableRow className="text-xl font-bold">

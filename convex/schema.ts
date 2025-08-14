@@ -18,7 +18,7 @@ import { ca } from "zod/locales";
 export default defineSchema({
   // ENHANCED: Services table with more detail
   services: defineTable({
-    orgId: v.string(),
+    orgId: v.id("organizations"),
     name: v.string(),
     description: v.string(),
     basePrice: v.number(),
@@ -46,6 +46,7 @@ export default defineSchema({
     carMake: v.string(),
     carModel: v.string(),
     carYear: v.number(),
+    carColor: v.optional(v.string()),
     notes: v.optional(v.string()),
     status: v.union(
       v.literal("pending"),

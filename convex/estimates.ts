@@ -42,7 +42,7 @@ export const calculate = query({
     // Process services
     for (const service of services) {
       if (!service || service.orgId !== args.orgId) continue;
-      const price = Number(service.basePrice ?? service.price ?? 0);
+      const price = Number(service.basePrice ?? 0);
       if (!Number.isFinite(price) || price < 0) continue;
       lineItems.push({ type: "service", name: service.name, price });
       subtotal += price;

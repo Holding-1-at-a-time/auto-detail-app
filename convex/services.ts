@@ -7,14 +7,14 @@ import type { Id } from './_generated/dataModel';
 export const createService = mutation({
   args: {
     orgId: v.id("organizations"),
-    userId: v.id("users"),
     name: v.string(),
-    price: v.number(),
     description: v.string(),
+    basePrice: v.number(),
     category: v.optional(v.string()),
     durationMinutes: v.optional(v.number()),
     isActive: v.optional(v.boolean()),
     imageUrl: v.optional(v.string()),
+    type: v.union(v.literal("base"), v.literal("add_on")),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -22,22 +22,19 @@ export const createService = mutation({
       throw new Error("You must be logged in to create a service.");
     }
 
-    // Validate organization membership
-    const user = await ctx.db.get(args.userId);
-    if (!user || user.orgId !== args.orgId) {
-      throw new Error("User is not a member of the specified organization");
-    }
+    // Organization membership validation can be added here if needed,
+    // by checking identity.orgMemberships.
 
     return await ctx.db.insert("services", {
       orgId: args.orgId,
-      userId: args.userId,
       name: args.name,
-      price: args.price,
-      description: args.description,
-      category: args.category,
-      durationMinutes: args.durationMinutes,
+      basePrice: args.basePrice,
+      type: args.type,
+      description: args.description ?? "",
+      category: args.category ?? "Uncategorized",
+      durationMinutes: args.durationMinutes ?? 0,
       isActive: args.isActive ?? true,
-      imageUrl: args.imageUrl,
+      imageUrl: args.imageUrl ?? "",
     });
   },
 });

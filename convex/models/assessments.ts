@@ -127,16 +127,21 @@ export async function createAssessmentModel(
 
   return await ctx.db.insert("assessments", {
     orgId: args.orgId,
-    userId: args.userId,
-    serviceId: args.serviceId,
     clientId,
     clientName: args.client.name,
     carMake: args.carMake,
     carModel: args.carModel,
-    carYear: args.carYear,
-    carColor: args.carColor ?? "Unknown",
+    carYear: args.carYear, // Add carYear here
     notes: args.notes,
     status: "pending",
+    // Initialize new fields from schema.ts
+    clientEmail: args.client.email ?? "", // Default to empty string if not provided
+    lineItems: [{ type: "service", name: service.name, price: service.basePrice }], // Add the selected service as a line item
+    subtotal: service.basePrice,
+    discount: 0, // Default discount to 0
+    tax: 0, // Default tax to 0, can be calculated later
+    carColor: args.carColor ?? "string", // Add carColor here
+    total: service.basePrice, // Initial total is just the service price
   });
 }
 // Delete an assessment by Id

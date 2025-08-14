@@ -25,6 +25,7 @@ export type CreateServiceArgs = {
   durationMinutes?: number;
   isActive?: boolean;
   imageUrl?: string;
+  type?: "base" | "add_on"; // Add type property
 };
 
 export type CreateEntitiesArgs = {
@@ -62,6 +63,7 @@ export const createEntities = internalMutation({
           durationMinutes: v.optional(v.number()),
           isActive: v.optional(v.boolean()),
           imageUrl: v.optional(v.string()),
+          type: v.optional(v.string()),
         }),
       ),
     ),
@@ -155,8 +157,8 @@ export const createEntities = internalMutation({
       }
       const insertedServiceId = await ctx.db.insert("services", {
         orgId: svc.orgId,
-        name: svc.name,
-        basePrice: svc.basePrice,
+        name: svc.name, 
+        basePrice: svc.price,
         type: svc.type ?? "base",
         description: svc.description ?? "", // Ensure description is a string
         category: svc.category ?? "Uncategorized", // Ensure category is a string

@@ -6,7 +6,7 @@ import { z } from "zod";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useOrganization } from "@clerk/nextjs";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import * as Sentry from "@sentry/nextjs";
 
@@ -29,40 +29,56 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import { useRouter } from "next/navigation";
 import { Id } from "@/convex/_generated/dataModel";
-import ClientSelector from "./clientSelector";
-const { logger } = Sentry;
+import { Combobox } from "@/components/ui/combobox";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import {
+  Command,
+  CommandList,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+} from "@/components/ui/command";
+import { Check } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-// Service options and a strict union of service IDs
-const serviceOptions = [
-  { id: "interior-detail", label: "Full Interior Detail" },
-  { id: "exterior-wash", label: "Exterior Hand Wash & Wax" },
-  { id: "paint-correction", label: "Paint Correction" },
-  { id: "ceramic-coating", label: "Ceramic Coating" },
-] as const;
-const serviceId = [
-  "interior-detail",
-  "exterior-wash",
-  "paint-correction",
-  "ceramic-coating",
-] as const;
 
-// Form schema with strong validation and correct type coercion
-const formSchema = z.object({
+// Strongly typed form values without unsafe casts
+export type FormValues = {
+  clientName: string;
+  clientEmail?: string;
+  clientPhone?: string;
+  clientId?: string; // Will hold Id<"clients"> as string from selection
+  carMake: string;
+  carModel: string;
+  carYear: number;
+  serviceId: string; // Will hold Id<"services"> as string from selection
+  notes?: string;
+};
+
+// Form schema with strong validation and correct coercion/normalization
+const formSchema: z.ZodType<FormValues> = z.object({
   clientName: z.string().min(2, "Name must be at least 2 characters."),
-  clientEmail: z.string().email("Invalid email address.").optional().or(z.literal("")),
+  clientEmail: z
+    .string()
+    .trim()
+    .email("Invalid email address.")
+    .optional()
+    .transform((v) => (v === "" ? undefined : v)),
   clientPhone: z.string().optional(),
   clientId: z.string().optional(),
   carMake: z.string().min(2, "Make is required."),
   carModel: z.string().min(2, "Model is required."),
-  carYear: z.number().int("Year must be an integer").min(1900, "Year must be 1900 or later").max(new Date().getFullYear() + 1, "Year cannot be in the future beyond next year"),
-  services: z.array(z.enum(serviceId)).min(1, "You have to select at least one service."),
+  carYear: z
+    .coerce
+    .number()
+    .int("Year must be an integer")
+    .min(1900, "Year must be 1900 or later")
+    .max(new Date().getFullYear() + 1, "Year cannot be in the future beyond next year"),
+  serviceId: z.string().min(1, "You must select a service."),
   notes: z.string().optional(),
 });
-
-export type FormValues = z.infer<typeof formSchema>;
 
 /**
  * Page for creating a new vehicle assessment.
@@ -81,6 +97,34 @@ export default function NewAssessmentPage() {
   const orgDoc = useQuery(api.organizations.getOrganization);
   const currentUser = useQuery(api.users.getCurrentUser);
 
+  // Load services for current org and set up client search state
+  const services = useQuery(
+    api.services.getServicesForCurrentOrg,
+    orgDoc?._id ? { orgId: orgDoc._id } : "skip"
+  );
+
+  const [searchClientName, setSearchClientName] = useState("");
+  const [debouncedSearchClientName, setDebouncedSearchClientName] = useState("");
+  const [isClientSelectorOpen, setClientSelectorOpen] = useState(false);
+  const [selectedClientId, setSelectedClientId] = useState<Id<"clients"> | null>(null);
+
+  useEffect(() => {
+    const handler = setTimeout(() => setDebouncedSearchClientName(searchClientName), 300);
+    return () => clearTimeout(handler);
+  }, [searchClientName]);
+
+  const clientSearchResults = useQuery(
+    api.clients.searchByName,
+    debouncedSearchClientName.length >= 2 && orgDoc?._id
+      ? { name: debouncedSearchClientName, orgId: orgDoc._id }
+      : "skip"
+  );
+
+  const serviceOptions = useMemo(
+    () => services?.map((s) => ({ value: s._id, label: s.name })) ?? [],
+    [services]
+  );
+
   const form = useForm<FormValues>({
 
     resolver: zodResolver(formSchema),
@@ -92,7 +136,7 @@ export default function NewAssessmentPage() {
       carMake: "",
       carModel: "",
       carYear: new Date().getFullYear(),
-      services: [],
+      serviceId: "",
       notes: "",
     },
   });
@@ -117,25 +161,40 @@ export default function NewAssessmentPage() {
       },
       async (span) => {
         try {
-          span.setAttribute("orgId", orgDoc._id);
-          span.setAttribute("userId", currentUser._id);
-          span.setAttribute("servicesCount", values.services.length);
-          span.setAttribute("hasClientId", Boolean(values.clientId));
+          span?.setData?.("orgId", orgDoc._id);
+          span?.setData?.("userId", currentUser._id);
+          span?.setData?.("hasClientId", Boolean(selectedClientId));
+
+          if (!selectedClientId) {
+            toast.error("Select an existing client to proceed.");
+            return;
+          }
+
+          if (!values.serviceId) {
+            toast.error("Please select a service.");
+            return;
+          }
+
+          const selectedService = services?.find((s) => s._id === values.serviceId);
+          if (!selectedService) {
+            toast.error("Selected service is invalid.");
+            return;
+          }
 
           await createAssessment({
             orgId: orgDoc._id,
             userId: currentUser._id,
             client: {
               name: values.clientName,
-              email: values.clientEmail || undefined,
-              phone: values.clientPhone || undefined,
+              email: values.clientEmail,
+              phone: values.clientPhone,
             },
             carMake: values.carMake,
             carModel: values.carModel,
             carYear: values.carYear,
-            notes: values.notes || undefined,
-            clientId: values.clientId as Id<"clients">,
-            serviceId: values.services[0] as Id<"services">
+            notes: values.notes,
+            clientId: selectedClientId,
+            serviceId: selectedService._id,
           });
 
           toast.success("Assessment created successfully!");
@@ -148,13 +207,24 @@ export default function NewAssessmentPage() {
           Sentry.captureException(err);
           const message = err instanceof Error ? err.message : "Unknown error";
           toast.error(`Failed to create assessment: ${message}`);
-          logger.error("Failed to create assessment", { error: message });
           // eslint-disable-next-line no-console
           console.error("Failed to create assessment:", err);
         } finally {
           setIsSubmitting(false);
         }
       }
+    );
+  }
+
+  if (orgDoc === undefined || currentUser === undefined) {
+    return (
+      <Card className="max-w-2xl mx-auto">
+        <CardHeader>
+          <CardTitle>New Vehicle Assessment</CardTitle>
+          <CardDescription>Loading context...</CardDescription>
+        </CardHeader>
+        <CardContent>Loading...</CardContent>
+      </Card>
     );
   }
 
@@ -170,7 +240,99 @@ export default function NewAssessmentPage() {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             {/* Client selection and details */}
-            <ClientSelector form={form} />
+            <div className="space-y-4 p-4 border rounded-md">
+              <h3 className="text-lg font-medium">Client Information</h3>
+              <Popover open={isClientSelectorOpen} onOpenChange={setClientSelectorOpen}>
+                <FormField
+                  control={form.control}
+                  name="clientName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Client Name</FormLabel>
+                      <FormControl>
+                        <PopoverTrigger asChild>
+                          <Input
+                            placeholder="Search or enter existing client..."
+                            {...field}
+                            onFocus={() => setClientSelectorOpen(true)}
+                            onChange={(e) => {
+                              field.onChange(e);
+                              setSearchClientName(e.target.value);
+                              setSelectedClientId(null);
+                              setClientSelectorOpen(true);
+                            }}
+                            disabled={isSubmitting}
+                          />
+                        </PopoverTrigger>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                  <Command>
+                    <CommandList>
+                      {clientSearchResults === undefined && debouncedSearchClientName && (
+                        <div className="py-6 text-center text-sm">Loading...</div>
+                      )}
+                      {clientSearchResults && clientSearchResults.length > 0 ? (
+                        <CommandGroup heading="Existing Clients">
+                          {clientSearchResults.map((client) => (
+                            <CommandItem
+                              key={client._id}
+                              onSelect={() => {
+                                form.setValue("clientName", client.name);
+                                form.setValue("clientEmail", client.email ?? "");
+                                form.setValue("clientPhone", client.phone ?? "");
+                                setSelectedClientId(client._id);
+                                form.setValue("clientId", client._id);
+                                setClientSelectorOpen(false);
+                                setSearchClientName("");
+                              }}
+                              value={client.name}
+                            >
+                              <Check className={cn("mr-2 h-4 w-4", selectedClientId === client._id ? "opacity-100" : "opacity-0")} />
+                              {client.name}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      ) : (
+                        <CommandEmpty>
+                          {debouncedSearchClientName ? "No clients found. Continue typing to search." : "Start typing to search for a client."}
+                        </CommandEmpty>
+                      )}
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+
+              <FormField
+                control={form.control}
+                name="clientEmail"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Client Email</FormLabel>
+                    <FormControl>
+                      <Input placeholder="client@email.com" {...field} readOnly={!!selectedClientId} disabled={isSubmitting} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="clientPhone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Client Phone</FormLabel>
+                    <FormControl>
+                      <Input placeholder="(123) 456-7890" {...field} readOnly={!!selectedClientId} disabled={isSubmitting} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
             {/* Vehicle Information */}
             <div className="space-y-4 p-4 border rounded-md">
@@ -183,7 +345,7 @@ export default function NewAssessmentPage() {
                     <FormItem>
                       <FormLabel>Car Make</FormLabel>
                       <FormControl>
-                        <Input placeholder="Toyota" {...field} />
+                        <Input placeholder="Toyota" {...field} disabled={isSubmitting} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -196,7 +358,7 @@ export default function NewAssessmentPage() {
                     <FormItem>
                       <FormLabel>Car Model</FormLabel>
                       <FormControl>
-                        <Input placeholder="Camry" {...field} />
+                        <Input placeholder="Camry" {...field} disabled={isSubmitting} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -218,6 +380,7 @@ export default function NewAssessmentPage() {
                             field.onChange(val === "" ? undefined : Number(val));
                           }}
                           onBlur={field.onBlur}
+                          disabled={isSubmitting}
                         />
                       </FormControl>
                       <FormMessage />
@@ -227,40 +390,31 @@ export default function NewAssessmentPage() {
               </div>
             </div>
 
-            {/* Services Requested */}
+            {/* Service Selection */}
             <div className="space-y-4 p-4 border rounded-md">
               <FormField
                 control={form.control}
-                name="services"
-                render={() => (
+                name="serviceId"
+                render={({ field }) => (
                   <FormItem>
                     <div className="mb-4">
-                      <FormLabel className="text-base">Services Requested</FormLabel>
-                      <FormDescription>Select all that apply.</FormDescription>
+                      <FormLabel className="text-base">Service</FormLabel>
+                      <FormDescription>Select one service.</FormDescription>
                     </div>
-                    {serviceOptions.map((item) => (
-                      <FormField
-                        key={item.id}
-                        control={form.control}
-                        name="services"
-                        render={({ field }) => (
-                          <FormItem key={item.id} className="flex flex-row items-start space-x-3 space-y-0">
-                            <FormControl>
-                              <Checkbox
-                                checked={field.value?.includes(item.id)}
-                                onCheckedChange={(checked) => {
-                                  const isChecked = checked === true;
-                                  return isChecked
-                                    ? field.onChange([...(field.value || []), item.id])
-                                    : field.onChange((field.value || []).filter((v) => v !== item.id));
-                                }}
-                              />
-                            </FormControl>
-                            <FormLabel className="font-normal">{item.label}</FormLabel>
-                          </FormItem>
-                        )}
+                    <FormControl>
+                      <Combobox
+                        options={serviceOptions}
+                        value={field.value ?? ""}
+                        onChange={(val) => field.onChange(val ?? "")}
+                        placeholder={
+                          services === undefined
+                            ? "Loading services..."
+                            : serviceOptions.length === 0
+                              ? "No services available"
+                              : "Select a service..."
+                        }
                       />
-                    ))}
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -279,6 +433,7 @@ export default function NewAssessmentPage() {
                       placeholder="e.g., specific stains, scratches, or areas of concern"
                       className="resize-none"
                       {...field}
+                      disabled={isSubmitting}
                     />
                   </FormControl>
                 </FormItem>

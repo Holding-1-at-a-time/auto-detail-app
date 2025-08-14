@@ -8,15 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Key, ReactElement, JSXElementConstructor, ReactNode, ReactPortal } from "react";
-import { string } from "zod";
 import { useUser } from "@clerk/clerk-react";
 
-export default function PublicBookingPage({
-  params,
-}: {
+interface PublicBookingPageProps {
   params: { orgSlug: string };
-}) {
+}
+
+export default function PublicBookingPage({ params }: PublicBookingPageProps) {
   const orgData = useQuery(api.public.getOrgForBooking, { slug: params.orgSlug });
   const createAssessment = useMutation(api.public.publicCreateAssessment);
   const { user } = useUser();
