@@ -49,13 +49,15 @@ import { Button } from "@/components/ui/button";
  */
 
 export default function ClientsPage() {
-  const { organization } = useOrganization();
+  const { organization, isLoaded } = useOrganization();
   const clients = useQuery(
     api.clients.listByOrg,
-    organization?.id ? { orgId: organization.id as Id<"organizations"> } : "skip"
+    organization?.id
+      ? { orgId: organization.id as Id<"organizations"> }
+      : "skip",
   );
 
-  if (clients === undefined) {
+  if (!isLoaded || clients === undefined) {
     return <div>Loading clients...</div>;
   }
 
@@ -70,7 +72,9 @@ export default function ClientsPage() {
       <Card>
         <CardHeader>
           <CardTitle>All Clients</CardTitle>
-          <CardDescription>A list of all clients for your organization.</CardDescription>
+          <CardDescription>
+            A list of all clients for your organization.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
@@ -100,7 +104,10 @@ export default function ClientsPage() {
           {clients.length === 0 && (
             <div className="text-center p-8 text-muted-foreground">
               <p>No clients found.</p>
-              <p className="mt-2 text-sm">New clients will appear here after you create your first assessment.</p>
+              <p className="mt-2 text-sm">
+                New clients will appear here after you create your first
+                assessment.
+              </p>
             </div>
           )}
         </CardContent>

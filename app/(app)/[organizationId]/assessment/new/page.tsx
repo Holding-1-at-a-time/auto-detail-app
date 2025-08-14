@@ -1,6 +1,6 @@
 "use client";
 
-import { useForm } from "react-hook-form";
+import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation, useQuery } from "convex/react";
@@ -44,21 +44,10 @@ import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 
-// Strongly typed form values without unsafe casts
-export type FormValues = {
-  clientName: string;
-  clientEmail?: string;
-  clientPhone?: string;
-  clientId?: string; // Will hold Id<"clients"> as string from selection
-  carMake: string;
-  carModel: string;
-  carYear: number;
-  serviceId: string; // Will hold Id<"services"> as string from selection
-  notes?: string;
-};
+// Form values are inferred from the Zod schema defined below to keep types in sync.
 
 // Form schema with strong validation and correct coercion/normalization
-const formSchema: z.ZodType<FormValues> = z.object({
+const formSchema = z.object({
   clientName: z.string().min(2, "Name must be at least 2 characters."),
   clientEmail: z
     .string()
@@ -80,6 +69,9 @@ const formSchema: z.ZodType<FormValues> = z.object({
   notes: z.string().optional(),
 });
 
+// Strongly typed form values inferred from schema
+export type FormValues = z.infer<typeof formSchema>;
+
 /**
  * Page for creating a new vehicle assessment.
  *
@@ -100,7 +92,7 @@ export default function NewAssessmentPage() {
   // Load services for current org and set up client search state
   const services = useQuery(
     api.services.getServicesForCurrentOrg,
-    orgDoc?._id ? { orgId: orgDoc._id } : "skip"
+    orgDoc?._id ? { orgId: orgDoc._id } : undefined
   );
 
   const [searchClientName, setSearchClientName] = useState("");
@@ -117,7 +109,7 @@ export default function NewAssessmentPage() {
     api.clients.searchByName,
     debouncedSearchClientName.length >= 2 && orgDoc?._id
       ? { name: debouncedSearchClientName, orgId: orgDoc._id }
-      : "skip"
+      : undefined
   );
 
   const serviceOptions = useMemo(
@@ -127,7 +119,7 @@ export default function NewAssessmentPage() {
 
   const form = useForm<FormValues>({
 
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver<FormValues>(formSchema),
     defaultValues: {
       clientName: "",
       clientEmail: "",
@@ -147,7 +139,7 @@ export default function NewAssessmentPage() {
    * dashboard page for the organization. If the mutation fails, displays
    * an error message to the user and logs the error to the console.
    */
-  async function onSubmit(values: FormValues) {
+  const onSubmit: SubmitHandler<FormValues> = async (values) => {
     if (!orgDoc?._id || !currentUser?._id) {
       toast.error("Organization and user must be identified to create an assessment.");
       return;
@@ -161,9 +153,9 @@ export default function NewAssessmentPage() {
       },
       async (span) => {
         try {
-          span?.setData?.("orgId", orgDoc._id);
-          span?.setData?.("userId", currentUser._id);
-          span?.setData?.("hasClientId", Boolean(selectedClientId));
+          span?.setAttribute?.("orgId", orgDoc._id);
+          span?.setAttribute?.("userId", currentUser._id);
+          span?.setAttribute?.("hasClientId", Boolean(selectedClientId));
 
           if (!selectedClientId) {
             toast.error("Select an existing client to proceed.");
@@ -214,7 +206,7 @@ export default function NewAssessmentPage() {
         }
       }
     );
-  }
+  };
 
   if (orgDoc === undefined || currentUser === undefined) {
     return (
