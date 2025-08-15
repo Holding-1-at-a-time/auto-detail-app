@@ -34,7 +34,21 @@ export const listClients = query({
     paginationOpts: paginationOptsValidator,
   },
   returns: v.object({
-    page: v.array(v.any()),
+    page: v.array(
+      v.object({
+        _id: v.id("clients"),
+        orgId: v.id("organizations"),
+        name: v.string(),
+        email: v.optional(v.string()),
+        phone: v.optional(v.string()),
+        address: v.object({
+          street: v.string(),
+          city: v.string(),
+          state: v.string(),
+          zip: v.string(),
+        }),
+      }),
+    ),
     isDone: v.boolean(),
     continueCursor: v.optional(v.string()),
   }),
@@ -50,11 +64,25 @@ export const getClient = query({
   args: {
     clientId: v.id("clients"),
   },
-  returns: v.optional(v.any()),
+  returns: 
+    v.object({
+      _id: v.id("clients"),
+      orgId: v.id("organizations"),
+      name: v.string(),
+      email: v.string(),
+      phone: v.string(),
+      address: v.object({
+        street: v.string(),
+        city: v.string(),
+        state: v.string(),
+        zip: v.string(),
+      }),
+    }),
+    
   handler: async (ctx, args) => {
     return await ctx.db.get(args.clientId);
   },
-});
+}); 
 
 export const updateClient = mutation({
   args: {

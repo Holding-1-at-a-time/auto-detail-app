@@ -54,6 +54,7 @@ export default defineSchema({
       v.literal("complete")
     ),
     serviceName: v.string(),
+    scheduledFor: v.number(), // Added scheduledFor field for calendar queries
 
     // NEW estimate fields
     lineItems: v.array(
@@ -109,20 +110,9 @@ export default defineSchema({
     logo: v.string(),
     stripeAccountId: v.optional(v.string()),
     stripeCustomerId: v.optional(v.string()),
-    services: v.object({
-      // Organization services can be customized here
-      service1: v.string(),
-      service2: v.string(),
-      service3: v.string(),
-      service4: v.string(),
-      service5: v.string(),
-      service6: v.string(),
-      service7: v.string(),
-      service8: v.string(),
-      service9: v.string(),
-      service10: v.string(),
-    }),
-    users: v.array(v.id("users"),),
+    serviceIds: v.array(v.id("services")), // Dynamic references to services
+    serviceNames: v.array(v.string()), // Snapshot of service names
+    users: v.array(v.id("users")),
     assessments: v.array(v.id("assessments")),
     roles: v.array(v.string()), // Roles assigned to the organization
     settings: v.object({
@@ -173,9 +163,13 @@ export default defineSchema({
 
   cars: defineTable({
     clientId: v.id("clients"),
+    orgId: v.id("organizations"), // Added orgId for organization scoping
     make: v.string(),
     model: v.string(),
     year: v.number(),
     color: v.optional(v.string()),
-  }).index("by_clientId", ["clientId"]),
+  }).index("by_clientId", ["clientId"]).index("by_orgId", ["orgId"]),
 })
+
+// Run codacy_cli_analyze on the updated schema.ts file to check for issues after adding scheduledFor to assessments.
+// codacy_cli_analyze --rootPath c:\Users\rrome\auto-detail-app --file c:\Users\rrome\auto-detail-app\convex\schema.ts

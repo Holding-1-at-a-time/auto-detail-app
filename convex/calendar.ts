@@ -7,20 +7,6 @@ export const getAssessmentsInRange = query({
     startDate: v.number(),
     endDate: v.number(),
   },
-  returns: v.array(
-    v.object({
-      _id: v.id("assessments"),
-      _creationTime: v.number(),
-      orgId: v.id("organizations"),
-      clientId: v.id("clients"),
-      scheduledFor: v.number(),
-      clientName: v.string(),
-      carMake: v.string(),
-      carModel: v.string(),
-      carYear: v.number(),
-      status: v.union(v.literal("pending"), v.literal("reviewed"), v.literal("complete")),
-    }),
-  ),
   handler: async (ctx, args) => {
     const assessments = await ctx.db
       .query("assessments")
@@ -28,9 +14,22 @@ export const getAssessmentsInRange = query({
       .filter((q) => q.gte(q.field("scheduledFor"), args.startDate))
       .filter((q) => q.lte(q.field("scheduledFor"), args.endDate))
       .collect();
-    return assessments.map((assessment) => ({
+    type Assessment = {
+      _id: string;
+      _creationTime: number;
+      orgId: string;
+      clientId: string;
+      scheduledFor: number;
+      clientName: string;
+      carMake: string;
+      carModel: string;
+      carYear: number;
+      status: string;
+    };
+    return assessments.map((assessment: Assessment) => ({
       _id: assessment._id,
       _creationTime: assessment._creationTime,
+      orgId: assessment.orgId,
       clientId: assessment.clientId,
       scheduledFor: assessment.scheduledFor,
       clientName: assessment.clientName,

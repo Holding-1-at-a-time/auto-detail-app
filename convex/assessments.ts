@@ -16,6 +16,12 @@ export const listAssessmentsByOrg = query({
     }),
   ),
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+    // TODO: Enforce that the caller is a member (or otherwise authorized)
+    // for args.orgId using your existing membership/ACL model before querying.
     const assessments = await ctx.db
       .query("assessments")
       .withIndex("by_orgId", (q) => q.eq("orgId", args.orgId))

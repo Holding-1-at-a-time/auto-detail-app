@@ -25,14 +25,15 @@ After each response:
 
 ### Troubleshooting
 
-If MCP Server is unavailable:
-1. Reset MCP extension
-2. Check VSCode settings:
-   - Review Copilot > MCP settings in Github
-   - Enable MCP servers at:
-     - Personal: `https://github.com/settings/copilot/features`
-     - Organization: `https://github.com/organizations/{org-name}/settings/copilot/features`
-3. Contact Codacy support if issues persist
+If the MCP server is unavailable:
+1. Reset the MCP extension.
+2. Check VS Code settings:
+    - Review GitHub Copilot settings in VS Code.
+    - Enable MCP server at:
+       - Personal: `https://github.com/settings/copilot/features`
+       - Organization: `https://github.com/organizations/{org-name}/settings/copilot/features`
+3. Contact Codacy support if issues persist.
+4. If you do not have the CLI installed, use Codacy MCP server tools via the Codacy web/GUI or bundled utilities as an alternative to reset or verify MCP server availability.
 
 ### Path Parameters
 Use standard filesystem paths (non-URL-encoded)
@@ -48,7 +49,7 @@ After package operations:
 
 Example workflow:
 ```
-npm install react-markdown
+pnpm install react-markdown
 ↓
 Run codacy_cli_analyze (trivy)
 ↓
