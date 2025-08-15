@@ -107,6 +107,8 @@ export default defineSchema({
     email: v.string(),
     website: v.string(),
     logo: v.string(),
+    stripeAccountId: v.optional(v.string()),
+    stripeCustomerId: v.optional(v.string()),
     services: v.object({
       // Organization services can be customized here
       service1: v.string(),
@@ -154,26 +156,26 @@ export default defineSchema({
 
   clients: defineTable({
     orgId: v.id("organizations"),
-    userId: v.id("users"),
-    assessmentId: v.id("assessments"),
     name: v.string(),
     email: v.optional(v.string()),
     phone: v.optional(v.string()),
-    address: (v.object(
-      {
-        street: v.string(),
-        city: v.string(),
-        state: v.string(),
-        zip: v.string(),
-      }
-    )),
-    carId: v.id("cars"),
+    address: v.object({
+      street: v.string(),
+      city: v.string(),
+      state: v.string(),
+      zip: v.string(),
+    }),
   })
-    .index("by_orgId_name_and_phone", ["orgId", "name", "phone"])
-    .index("by_assessmentId", ["assessmentId"])
-    .index("by_carId", ["carId"])
     .index("by_orgId", ["orgId"])
-    .index("by_name", ["name"])
     .index("by_orgId_and_name", ["orgId", "name"])
     .index("by_orgId_and_email", ["orgId", "email"])
+    .index("by_orgId_and_phone", ["orgId", "phone"]),
+
+  cars: defineTable({
+    clientId: v.id("clients"),
+    make: v.string(),
+    model: v.string(),
+    year: v.number(),
+    color: v.optional(v.string()),
+  }).index("by_clientId", ["clientId"]),
 })

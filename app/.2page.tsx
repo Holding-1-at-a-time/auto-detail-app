@@ -110,7 +110,7 @@ export default function HomePage() {
                                 <div className="flex mb-2">
                                     {[...Array(5)].map((_, i) => <Star key={i} className="text-primary fill-primary" />)}
                                 </div>
-                                <p className="italic mb-4">"The attention to detail was insane. My car looks better than the day I bought it. The online quote process was so easy."</p>
+                                <p className="italic mb-4">&quot;The attention to detail was insane. My car looks better than the day I bought it. The online quote process was so easy.&quot;</p>
                                 <p className="font-bold">- Alex R. <span className="text-muted-foreground font-normal">/ Tesla Model 3</span></p>
                             </CardContent>
                         </Card>
@@ -119,7 +119,7 @@ export default function HomePage() {
                                 <div className="flex mb-2">
                                     {[...Array(5)].map((_, i) => <Star key={i} className="text-primary fill-primary" />)}
                                 </div>
-                                <p className="italic mb-4">"Finally, a detailing service that respects my time. The quote was fair, the work was flawless. Highly recommend the ceramic coating."</p>
+                                <p className="italic mb-4">&quot;Finally, a detailing service that respects my time. The quote was fair, the work was flawless. Highly recommend the ceramic coating.&quot;</p>
                                 <p className="font-bold">- Sarah J. <span className="text-muted-foreground font-normal">/ Porsche 911</span></p>
                             </CardContent>
                         </Card>

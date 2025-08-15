@@ -1,81 +1,92 @@
 // convex/clients.ts
-import { query } from "./_generated/server";
+import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
+import { paginationOptsValidator } from "convex/server";
 
-// Query to get all clients for the user's active organization
-export const listByOrg = query({
+export const createClient = mutation({
   args: {
     orgId: v.id("organizations"),
+    name: v.string(),
+    email: v.optional(v.string()),
+    phone: v.optional(v.string()),
+    address: v.object({
+      street: v.string(),
+      city: v.string(),
+      state: v.string(),
+      zip: v.string(),
+    }),
   },
+  returns: v.id("clients"),
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      return [];
-    }
+    return await ctx.db.insert("clients", {
+      orgId: args.orgId,
+      name: args.name,
+      email: args.email,
+      phone: args.phone,
+      address: args.address,
+    });
+  },
+});
 
-    if (identity.orgId !== args.orgId) {
-      return [];
-    }
-
-    return ctx.db
+export const listClients = query({
+  args: {
+    orgId: v.id("organizations"),
+    paginationOpts: paginationOptsValidator,
+  },
+  returns: v.object({
+    page: v.array(v.any()),
+    isDone: v.boolean(),
+    continueCursor: v.optional(v.string()),
+  }),
+  handler: async (ctx, args) => {
+    return await ctx.db
       .query("clients")
       .withIndex("by_orgId", (q) => q.eq("orgId", args.orgId))
-      .order("desc")
-      .collect();
+      .paginate(args.paginationOpts);
   },
 });
 
-// Query to search for clients by name within the user's organization
-export const searchByName = query({
-    args: {
-        orgId: v.id("organizations"),
-        name: v.string(),
-    },
-    handler: async (ctx, args) => {
-        const identity = await ctx.auth.getUserIdentity();
-        if (!identity) {
-            return [];
-        }
-
-        if (identity.orgId !== args.orgId) {
-            return [];
-        }
-
-        if (!args.name) {
-            return [];
-        }
-
-        return ctx.db
-            .query("clients")
-            .withIndex("by_name", (q) => q.eq("name", args.name))
-            .take(10);
-    }
-});
-
-// Get a single client by their ID
-export const getClientById = query({
+export const getClient = query({
   args: {
     clientId: v.id("clients"),
   },
+  returns: v.optional(v.any()),
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      return null;
-    }
+    return await ctx.db.get(args.clientId);
+  },
+});
 
-    const client = await ctx.db.get(args.clientId);
+export const updateClient = mutation({
+  args: {
+    clientId: v.id("clients"),
+    update: v.object({
+      name: v.optional(v.string()),
+      email: v.optional(v.string()),
+      phone: v.optional(v.string()),
+      address: v.optional(
+        v.object({
+          street: v.string(),
+          city: v.string(),
+          state: v.string(),
+          zip: v.string(),
+        }),
+      ),
+    }),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.clientId, args.update);
+    return null;
+  },
+});
 
-    if (!client) {
-      return null;
-    }
-
-    // Security check: ensure the user's orgId matches the client's orgId
-    if (client.orgId !== identity.orgId) {
-      // This case should ideally not happen if UI is built correctly,
-      // but it's a crucial security measure.
-      return null;
-    }
-
-    return client;
+export const deleteClient = mutation({
+  args: {
+    clientId: v.id("clients"),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await ctx.db.delete(args.clientId);
+    return null;
   },
 });

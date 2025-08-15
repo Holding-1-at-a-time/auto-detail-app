@@ -29,7 +29,7 @@ export default function HomePage() {
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div className="space-y-6 text-center md:text-left">
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tighter">
-                Your Car's Second Chance at a First Impression.
+                Your Car&apos;s Second Chance at a First Impression.
               </h1>
               <p className="text-lg text-muted-foreground max-w-lg mx-auto md:mx-0">
                 Forget phone calls and waiting. Our modern platform provides a
@@ -61,7 +61,7 @@ export default function HomePage() {
         {/* Features Section */}
         <section className="bg-white/5 py-20">
           <div className="container mx-auto px-6 text-center">
-            <h2 className="text-3xl font-bold mb-4">Why We're Different</h2>
+            <h2 className="text-3xl font-bold mb-4">Why We&apos;re Different</h2>
             <p className="text-muted-foreground mb-12 max-w-2xl mx-auto">We combine master craftsmanship with modern technology to deliver unparalleled results and convenience.</p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <div className="flex flex-col items-center p-6">
@@ -72,7 +72,7 @@ export default function HomePage() {
               <div className="flex flex-col items-center p-6">
                 <CheckCircle size={40} className="text-primary mb-4" />
                 <h3 className="text-xl font-semibold mb-2">Transparent Process</h3>
-                <p className="text-muted-foreground">No hidden fees. You'll see the full scope and cost of the service before you commit.</p>
+                <p className="text-muted-foreground">No hidden fees. You&apos;ll see the full scope and cost of the service before you commit.</p>
               </div>
               <div className="flex flex-col items-center p-6">
                 <Sparkles size={40} className="text-primary mb-4" />
@@ -140,7 +140,7 @@ export default function HomePage() {
         <section className="bg-white/5 py-20">
           <div className="container mx-auto px-6">
             <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold">Don't Just Take Our Word For It</h2>
+              <h2 className="text-3xl font-bold">Don&apos;t Just Take Our Word For It</h2>
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-4xl mx-auto">
               <Card className="bg-transparent border-secondary/20">
@@ -148,7 +148,7 @@ export default function HomePage() {
                   <div className="flex mb-2">
                     {[...Array(5)].map((_, i) => <Star key={i} className="text-yellow-400 fill-yellow-400" />)}
                   </div>
-                  <blockquote className="italic text-lg mb-4">"The professionalism and quality are unmatched. My car looks better than when I bought it. The online system was so easy to use."</blockquote>
+                  <blockquote className="italic text-lg mb-4">&quot;The professionalism and quality are unmatched. My car looks better than when I bought it. The online system was so easy to use.&quot;</blockquote>
                   <p className="font-semibold">- Sarah J.</p>
                 </CardContent>
               </Card>
@@ -157,7 +157,7 @@ export default function HomePage() {
                   <div className="flex mb-2">
                     {[...Array(5)].map((_, i) => <Star key={i} className="text-yellow-400 fill-yellow-400" />)}
                   </div>
-                  <blockquote className="italic text-lg mb-4">"I was skeptical about the online assessment, but it was incredibly accurate and convenient. Highly recommend Detailing Co.!"</blockquote>
+                  <blockquote className="italic text-lg mb-4">&quot;I was skeptical about the online assessment, but it was incredibly accurate and convenient. Highly recommend Detailing Co.!&quot;</blockquote>
                   <p className="font-semibold">- Mike R.</p>
                 </CardContent>
               </Card>

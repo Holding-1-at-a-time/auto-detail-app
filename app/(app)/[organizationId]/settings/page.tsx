@@ -155,12 +155,13 @@ export default function SettingsPage() {
         <div className="space-y-8">
             <div>
                 <h1 className="text-3xl font-bold">Business Settings</h1>
-                <p className="text-muted-foreground">Manage your organization's services and public booking information.</p>
+                <p className="text-muted-foreground">Manage your organization&apos;s services and public booking information.</p>
             </div>
 
             <Protect role="org:admin" fallback={<p>You do not have permission to view this page.</p>}>
                 <ManageServicesCard />
                 <BookingLinkCard />
+                {/* <SubscriptionCard /> */}
             </Protect>
         </div>
     );

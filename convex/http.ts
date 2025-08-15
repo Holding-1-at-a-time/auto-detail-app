@@ -76,4 +76,21 @@ async function validateRequest(req: Request): Promise<WebhookEvent | null> {
   }
 }
 
+http.route({
+  path: "/api/webhooks/stripe",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const signature = request.headers.get("stripe-signature") as string;
+    const payload = await request.text();
+
+    try {
+      await ctx.runAction(internal.stripe.handleStripeWebhook, { signature, payload });
+      return new Response(null, { status: 200 });
+    } catch (error) {
+      console.error(error);
+      return new Response("Webhook Error", { status: 400 });
+    }
+  }),
+});
+
 export default http;

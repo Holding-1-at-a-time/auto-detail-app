@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { OrganizationSwitcher } from "@clerk/nextjs";
+import { OrganizationSwitcher, Protect } from "@clerk/nextjs";
 
 export function AppNav() {
     const params = useParams();
@@ -23,6 +23,16 @@ export function AppNav() {
                         <Link href={`/${organizationId}/${item.path}`}>{item.label}</Link>
                     </li>
                 ))}
+                <Protect feature="team_invites">
+                    <li>
+                        <Link href={`/${organizationId}/team`}>Team</Link>
+                    </li>
+                </Protect>
+                <Protect role="org:admin">
+                    <li>
+                        <Link href={`/${organizationId}/pricing`}>Pricing</Link>
+                    </li>
+                </Protect>
             </ul>
             <div className="mt-auto pt-4">
                 <OrganizationSwitcher hidePersonal={true} />
