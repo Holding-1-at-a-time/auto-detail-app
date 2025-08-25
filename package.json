@@ -44,7 +44,7 @@
     "framer-motion": "^12.23.12",
     "gpg": "^0.6.0",
     "lucide-react": "^0.539.0",
-    "next": "15.4.6",
+    "next": "15.5.0",
     "next-themes": "^0.4.6",
     "postcss": "^8.5.6",
     "qrcode.react": "^4.2.0",
